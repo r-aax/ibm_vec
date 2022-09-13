@@ -5,12 +5,15 @@
 
 // Размеры расчетной области.
 #define NX 100
-#define NY 40
-#define NZ 40
+#define NY 4
+#define NZ 4
 
 // Шаг по пространству и по времени.
 #define DH 0.001 // м
-#define DT 0.001 // с
+#define DT 0.0001 // с
+
+// Количество шагов по времени.
+#define TIME_STEPS 100
 
 // Показатель адиабаты.
 #define GAMMA 1.4

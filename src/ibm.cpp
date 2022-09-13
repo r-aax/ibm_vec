@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <iostream>
+#include <iomanip>
+#include <ostream>
+#include <sstream>
 #include <fstream>
 #include <math.h>
 
@@ -85,9 +91,11 @@ calc_area_init()
 
 // Экспорт в ParaView.
 void
-calc_area_paraview_export()
+calc_area_paraview_export(int i)
 {
-    ofstream f("export.dat");
+    ostringstream ss;
+    ss << "out/export_" << setfill('0') << setw(10) << i << ".dat";
+    ofstream f(ss.str());
 
     f << "TITLE=\"[" << NX << " * " << NY << " * " << NZ << "] calc area\"" << endl;
     f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Rho\", \"U\", \"V\", \"W\", \"P\"" << endl;
@@ -254,6 +262,12 @@ int
 main()
 {
     calc_area_init();
-    step();
-    calc_area_paraview_export();
+
+    for (int i = 0; i < TIME_STEPS; i++)
+    {
+        cout << ".... step " << i << " of " << TIME_STEPS << endl;
+
+        step();
+        calc_area_paraview_export(i);
+    }
 }
