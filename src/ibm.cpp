@@ -35,26 +35,26 @@ using namespace std;
 // Сохраняющиеся данные:
 //   - плотность импульса
 //   - плотность полной энергии
-float rho[CELLS_COUNT];
+float r[CELLS_COUNT];
 float u[CELLS_COUNT];
 float v[CELLS_COUNT];
 float w[CELLS_COUNT];
 float p[CELLS_COUNT];
 //
-float rho_u[CELLS_COUNT];
-float rho_v[CELLS_COUNT];
-float rho_w[CELLS_COUNT];
+float ru[CELLS_COUNT];
+float rv[CELLS_COUNT];
+float rw[CELLS_COUNT];
 float E[CELLS_COUNT];
 //
-float fp_rho[CELLS_COUNT];
-float fp_u[CELLS_COUNT];
-float fp_v[CELLS_COUNT];
-float fp_w[CELLS_COUNT];
+float fp_r[CELLS_COUNT];
+float fp_ru[CELLS_COUNT];
+float fp_rv[CELLS_COUNT];
+float fp_rw[CELLS_COUNT];
 float fp_E[CELLS_COUNT];
-float fn_rho[CELLS_COUNT];
-float fn_u[CELLS_COUNT];
-float fn_v[CELLS_COUNT];
-float fn_w[CELLS_COUNT];
+float fn_r[CELLS_COUNT];
+float fn_ru[CELLS_COUNT];
+float fn_rv[CELLS_COUNT];
+float fn_rw[CELLS_COUNT];
 float fn_E[CELLS_COUNT];
 
 // Инициализация расчетной области.
@@ -72,7 +72,7 @@ calc_area_init()
 
         if (ix < left_cell_count)
         {
-            rho[i] = 1.0;
+            r[i] = 1.0;
             u[i] = 0.75;
             v[i] = 0.0;
             w[i] = 0.0;
@@ -80,7 +80,7 @@ calc_area_init()
         }
         else
         {
-            rho[i] = 0.125;
+            r[i] = 0.125;
             u[i] = 0.0;
             v[i] = 0.0;
             w[i] = 0.0;
@@ -116,7 +116,7 @@ calc_area_paraview_export(int i)
     LOOP3 f << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " "; f << endl;
     LOOP3 f << LY << " " << LY << " " << HY << " " << HY << " " << LY << " " << LY << " " << HY << " " << HY << " "; f << endl;
     LOOP3 f << LZ << " " << LZ << " " << LZ << " " << LZ << " " << HZ << " " << HZ << " " << HZ << " " << HZ << " "; f << endl;
-    LOOP1 f << rho[i] << " "; f << endl;
+    LOOP1 f << r[i] << " "; f << endl;
     LOOP1 f << u[i] << " "; f << endl;
     LOOP1 f << v[i] << " "; f << endl;
     LOOP1 f << w[i] << " "; f << endl;
@@ -147,13 +147,13 @@ d_to_u()
 {
     LOOP1
     {
-        rho_u[i] = rho[i] * u[i];
-        rho_v[i] = rho[i] * v[i];
-        rho_w[i] = rho[i] * w[i];
+        ru[i] = r[i] * u[i];
+        rv[i] = r[i] * v[i];
+        rw[i] = r[i] * w[i];
 
-        // E = rho * (V^2/2 + e) = rho * (V^2/2 + p/((GAMMA - 1) * rho))
+        // E = rho * (V^2/2 + e) = rho * (V^2/2 + p/((GAMMA - 1.0) * rho))
         //   = rho * V^2/2 + p/(GAMMA - 1)
-        E[i] = 0.5 * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i]) + p[i] / (GAMMA - 1);
+        E[i] = 0.5 * r[i] * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i]) + p[i] / (GAMMA - 1.0);
     }
 }
 
@@ -163,13 +163,13 @@ u_to_d()
 {
     LOOP1
     {
-        u[i] = rho_u[i] / rho[i];
-        v[i] = rho_v[i] / rho[i];
-        w[i] = rho_w[i] / rho[i];
+        u[i] = ru[i] / r[i];
+        v[i] = rv[i] / r[i];
+        w[i] = rw[i] / r[i];
 
-        // E = rho * V^2/2 + p/(GAMMA - 1)
-        // p = (E - rho * V^2/2) * (GAMMA - 1)
-        p[i] = (E[i] - 0.5 * rho[i] * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i])) * (GAMMA - 1);
+        // E = rho * V^2/2 + p/(GAMMA - 1.0)
+        // p = (E - rho * V^2/2) * (GAMMA - 1.0)
+        p[i] = (E[i] - 0.5 * r[i] * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i])) * (GAMMA - 1.0);
     }
 }
 
@@ -179,7 +179,7 @@ calc_f()
 {
     LOOP1
     {
-        float a = sqrt(GAMMA * p[i] / rho[i]);
+        float a = sqrt(GAMMA * p[i] / r[i]);
         float l1 = u[i] - a;
         float l2 = u[i];
         float l5 = u[i] + a;
@@ -189,21 +189,21 @@ calc_f()
         float ln1 = 0.5 * (l1 - abs(l1));
         float ln2 = 0.5 * (l2 - abs(l2));
         float ln5 = 0.5 * (l5 - abs(l5));
-        float k = 0.5 * rho[i] / GAMMA;
+        float k = 0.5 * r[i] / GAMMA;
         float V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
-        float H = 0.5 * V2 + a * a / (GAMMA - 1);
+        float H = 0.5 * V2 + a * a / (GAMMA - 1.0);
 
-        fp_rho[i] = k * (lp1 + 2.0 * (GAMMA - 1) * lp2 + lp5);
-        fp_u[i] = k * ((u[i] - a) * lp1 + 2.0 * (GAMMA - 1) * u[i] * lp2 + (u[i] + a) * lp5);
-        fp_v[i] = k * (v[i] * lp1 + 2.0 * (GAMMA - 1) * v[i] * lp2 + v[i] * lp5);
-        fp_w[i] = k * (w[i] * lp1 + 2.0 * (GAMMA - 1) * w[i] * lp2 + w[i] * lp5);
-        fp_E[i] = k * ((H - u[i] * a) * lp1 + (GAMMA - 1) * V2 * lp2 + (H + u[i] * a) * lp5);
+        fp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
+        fp_ru[i] = k * ((u[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + (u[i] + a) * lp5);
+        fp_rv[i] = k * (v[i] * lp1 + 2.0 * (GAMMA - 1.0) * v[i] * lp2 + v[i] * lp5);
+        fp_rw[i] = k * (w[i] * lp1 + 2.0 * (GAMMA - 1.0) * w[i] * lp2 + w[i] * lp5);
+        fp_E[i] = k * ((H - u[i] * a) * lp1 + (GAMMA - 1.0) * V2 * lp2 + (H + u[i] * a) * lp5);
 
-        fn_rho[i] = k * (ln1 + 2.0 * (GAMMA - 1) * ln2 + ln5);
-        fn_u[i] = k * ((u[i] - a) * ln1 + 2.0 * (GAMMA - 1) * u[i] * ln2 + (u[i] + a) * ln5);
-        fn_v[i] = k * (v[i] * ln1 + 2.0 * (GAMMA - 1) * v[i] * ln2 + v[i] * ln5);
-        fn_w[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1) * w[i] * ln2 + w[i] * ln5);
-        fn_E[i] = k * ((H - u[i] * a) * ln1 + (GAMMA - 1) * V2 * ln2 + (H + u[i] * a) * ln5);
+        fn_r[i] = k * (ln1 + 2.0 * (GAMMA - 1.0) * ln2 + ln5);
+        fn_ru[i] = k * ((u[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * u[i] * ln2 + (u[i] + a) * ln5);
+        fn_rv[i] = k * (v[i] * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + v[i] * ln5);
+        fn_rw[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + w[i] * ln5);
+        fn_E[i] = k * ((H - u[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + u[i] * a) * ln5);
     }
 }
 
@@ -240,10 +240,10 @@ calc_flows()
             ri = LIN(ix + 1, iy, iz);
         }
 
-        rho[i] -= (DT / DH) * (fp_rho[i] + fn_rho[ri] - fp_rho[li] - fn_rho[i]);
-        rho_u[i] -= (DT / DH) * (fp_u[i] + fn_u[ri] - fp_u[li] - fn_u[i]);
-        rho_v[i] -= (DT / DH) * (fp_v[i] + fn_v[ri] - fp_v[li] - fn_v[i]);
-        rho_w[i] -= (DT / DH) * (fp_w[i] + fn_w[ri] - fp_w[li] - fn_w[i]);
+        r[i] -= (DT / DH) * (fp_r[i] + fn_r[ri] - fp_r[li] - fn_r[i]);
+        ru[i] -= (DT / DH) * (fp_ru[i] + fn_ru[ri] - fp_ru[li] - fn_ru[i]);
+        rv[i] -= (DT / DH) * (fp_rv[i] + fn_rv[ri] - fp_rv[li] - fn_rv[i]);
+        rw[i] -= (DT / DH) * (fp_rw[i] + fn_rw[ri] - fp_rw[li] - fn_rw[i]);
         E[i] -= (DT / DH) * (fp_E[i] + fn_E[ri] - fp_E[li] - fn_E[i]);
     }
 }

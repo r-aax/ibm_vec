@@ -9,11 +9,11 @@
 #define NZ 4
 
 // Шаг по пространству и по времени.
-#define DH 0.001 // м
-#define DT 0.0001 // с
+#define DH 0.1  // м
+#define DT 0.01 // с
 
 // Количество шагов по времени.
-#define TIME_STEPS 100
+#define TIME_STEPS 500
 
 // Показатель адиабаты.
 #define GAMMA 1.4
