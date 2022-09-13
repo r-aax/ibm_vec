@@ -227,7 +227,7 @@ calc_flows()
             li = LIN(ix - 1, iy, iz);
         }
 
-        if (iz < NX - 1)
+        if (ix < NX - 1)
         {
             ri = LIN(ix + 1, iy, iz);
         }
