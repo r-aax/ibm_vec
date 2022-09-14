@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include "conf.h"
+#include "mth.h"
 
 using namespace std;
 
@@ -57,6 +58,37 @@ float fn_rv[CELLS_COUNT];
 float fn_rw[CELLS_COUNT];
 float fn_E[CELLS_COUNT];
 
+// Вспомогательные данные расчетной области.
+// Тип ячейки:
+//   0 - обычная расчетная ячейка.
+//   1 - граничная ячейка.
+//   2 - фиктивная ячейка.
+//   3 - внутренняя ячейка, которая не принимает участие в расчетах.
+#define KIND_COMMON 0
+#define KIND_BORDER 1
+#define KIND_GHOST 2
+#define KIND_INNER 3
+int kind[CELLS_COUNT];
+
+// Данные сфер для обтекания.
+float sph_x[SPHERES_COUNT];
+float sph_y[SPHERES_COUNT];
+float sph_z[SPHERES_COUNT];
+float sph_r[SPHERES_COUNT];
+
+// Инициализация сферы.
+void
+sphere_init_xy(int i,
+               float sphere_x,
+               float sphere_y,
+               float sphere_r)
+{
+    sph_x[i] = sphere_x;
+    sph_y[i] = sphere_y;
+    sph_z[i] = (static_cast<float>(NZ) / 2.0);
+    sph_r[i] = sphere_r;
+}
+
 // Инициализация расчетной области.
 void
 calc_area_init()
@@ -87,6 +119,169 @@ calc_area_init()
             p[i] = 0.1;
         }
     }
+
+    // Инициализация сфер.
+    sphere_init_xy(0,  2.0, 2.0, 1.05);
+    sphere_init_xy(1,  4.0, 4.0, 0.75);
+    sphere_init_xy(2,  5.0, 1.0, 0.75);
+    sphere_init_xy(3,  7.0, 2.5, 1.15);
+    sphere_init_xy(4, 10.0, 0.0, 1.05);
+}
+
+// Определение типов ячеек.
+void
+calc_area_define_cells_kinds()
+{
+    LOOP1 kind[i] = KIND_COMMON;
+
+    LOOP3
+    {
+        int i = LIN(ix, iy, iz);
+        float xl = DH * static_cast<float>(ix);
+        float xr = DH * static_cast<float>(ix + 1);
+        float yl = DH * static_cast<float>(iy);
+        float yr = DH * static_cast<float>(iy + 1);
+        float zl = DH * static_cast<float>(iz);
+        float zr = DH * static_cast<float>(iz + 1);
+
+        for (int si = 0; si < SPHERES_COUNT; si++)
+        {
+            float dxl2 = MTH_DIFF2(xl, sph_x[si]);
+            float dxr2 = MTH_DIFF2(xr, sph_x[si]);
+            float dyl2 = MTH_DIFF2(yl, sph_y[si]);
+            float dyr2 = MTH_DIFF2(yr, sph_y[si]);
+            float dzl2 = MTH_DIFF2(zl, sph_z[si]);
+            float dzr2 = MTH_DIFF2(zr, sph_z[si]);
+            float r2 = sph_r[si] * sph_r[si];
+            int lll_in = static_cast<int>(dxl2 + dyl2 + dzl2 <= r2);
+            int llr_in = static_cast<int>(dxl2 + dyl2 + dzr2 <= r2);
+            int lrl_in = static_cast<int>(dxl2 + dyr2 + dzl2 <= r2);
+            int lrr_in = static_cast<int>(dxl2 + dyr2 + dzr2 <= r2);
+            int rll_in = static_cast<int>(dxr2 + dyl2 + dzl2 <= r2);
+            int rlr_in = static_cast<int>(dxr2 + dyl2 + dzr2 <= r2);
+            int rrl_in = static_cast<int>(dxr2 + dyr2 + dzl2 <= r2);
+            int rrr_in = static_cast<int>(dxr2 + dyr2 + dzr2 <= r2);
+            int in_cnt = lll_in + llr_in + lrl_in + lrr_in + rll_in + rlr_in + rrl_in + rrr_in;
+
+            if (in_cnt == 0)
+            {
+                // Все ячейки снаружи окружности.
+                // Ничего не делаем.
+                ; 
+            }
+            else if (in_cnt == 8)
+            {
+                // Все ячейки внутри окружности.
+                kind[i] = KIND_INNER;
+
+                // Конфликт может быть только с одной сферой.
+                break;
+            }
+            else
+            {
+                float xc = MTH_AVG(xl, xr);
+                float yc = MTH_AVG(yl, yr);
+                float zc = MTH_AVG(zl, zr);
+
+                if (MTH_DIST2(xc, yc, zc, sph_x[si], sph_y[si], sph_z[si]) <= r2)
+                {
+                    // Центр ячейки внутри сферы.
+                    kind[i] = KIND_GHOST;
+                }
+                else
+                {
+                    // Центр ячейки снаружи сферы.
+                    kind[i] = KIND_BORDER;
+                }
+
+                // Конфликт может быть только с одной сферой.
+                break;
+            }
+        }
+    }
+
+    // Еще один проход по внутренним ячейкам.
+    // Если соседом внутренней ячейки является граничная или обычная ячейка,
+    // то внутренняя ячейка становится фиктивной.
+    LOOP3
+    {
+        int i = LIN(ix, iy, iz);
+
+        if (kind[i] == KIND_INNER)
+        {
+            if (ix > 0)
+            {
+                int bi = LIN(ix - 1, iy, iz);
+
+                if ((kind[bi] == KIND_COMMON) || (kind[bi] == KIND_BORDER))
+                {
+                    kind[i] = KIND_GHOST;
+
+                    continue;
+                }
+            }
+
+            if (ix < NX - 1)
+            {
+                int bi = LIN(ix + 1, iy, iz);
+
+                if ((kind[bi] == KIND_COMMON) || (kind[bi] == KIND_BORDER))
+                {
+                    kind[i] = KIND_GHOST;
+
+                    continue;
+                }
+            }
+
+            if (iy > 0)
+            {
+                int bi = LIN(ix, iy - 1, iz);
+
+                if ((kind[bi] == KIND_COMMON) || (kind[bi] == KIND_BORDER))
+                {
+                    kind[i] = KIND_GHOST;
+
+                    continue;
+                }
+            }
+
+            if (iy < NY - 1)
+            {
+                int bi = LIN(ix, iy + 1, iz);
+
+                if ((kind[bi] == KIND_COMMON) || (kind[bi] == KIND_BORDER))
+                {
+                    kind[i] = KIND_GHOST;
+
+                    continue;
+                }
+            }
+
+            if (iz > 0)
+            {
+                int bi = LIN(ix, iy, iz - 1);
+
+                if ((kind[bi] == KIND_COMMON) || (kind[bi] == KIND_BORDER))
+                {
+                    kind[i] = KIND_GHOST;
+
+                    continue;
+                }
+            }
+
+            if (iz < NZ - 1)
+            {
+                int bi = LIN(ix, iy, iz + 1);
+
+                if ((kind[bi] == KIND_COMMON) || (kind[bi] == KIND_BORDER))
+                {
+                    kind[i] = KIND_GHOST;
+
+                    continue;
+                }
+            }
+        }
+    }
 }
 
 // Экспорт в ParaView.
@@ -98,13 +293,13 @@ calc_area_paraview_export(int i)
     ofstream f(ss.str());
 
     f << "TITLE=\"[" << NX << " * " << NY << " * " << NZ << "] calc area\"" << endl;
-    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Rho\", \"U\", \"V\", \"W\", \"P\"" << endl;
+    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Rho\", \"U\", \"V\", \"W\", \"P\", \"Kind\"" << endl;
     f << "ZONE T=\"single zone\"" << endl;
     f << "NODES=" << (8 * CELLS_COUNT) << endl;
     f << "ELEMENTS=" << CELLS_COUNT << endl;
     f << "DATAPACKING=BLOCK" << endl;
     f << "ZONETYPE=FEBRICK" << endl;
-    f << "VARLOCATION=([4-8]=CELLCENTERED)" << endl;
+    f << "VARLOCATION=([4-9]=CELLCENTERED)" << endl;
 
 #define LX (ix * DH)
 #define HX ((ix + 1) * DH)
@@ -121,6 +316,7 @@ calc_area_paraview_export(int i)
     LOOP1 f << v[i] << " "; f << endl;
     LOOP1 f << w[i] << " "; f << endl;
     LOOP1 f << p[i] << " "; f << endl;
+    LOOP1 f << kind[i] << " "; f << endl;
 
 #undef LX
 #undef HX
@@ -262,12 +458,14 @@ int
 main()
 {
     calc_area_init();
+    calc_area_define_cells_kinds();
+    calc_area_paraview_export(0);
 
     for (int i = 0; i < TIME_STEPS; i++)
     {
         cout << ".... step " << i << " of " << TIME_STEPS << endl;
 
         step();
-        calc_area_paraview_export(i);
+        calc_area_paraview_export(i + 1);
     }
 }

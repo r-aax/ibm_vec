@@ -5,6 +5,6 @@ cd src
 rm -f ../ibm
 rm -f *.o
 
-g++ *.cpp -o ../ibm
+g++ *.cpp -g -o ../ibm
 
 cd ..
