@@ -14,7 +14,7 @@
 #define DT 0.01 // с
 
 // Количество шагов по времени.
-#define TIME_STEPS 400
+#define TIME_STEPS 500
 
 // Показатель адиабаты.
 #define GAMMA 1.4

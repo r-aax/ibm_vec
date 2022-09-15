@@ -57,6 +57,28 @@ double fn_ru[CELLS_COUNT];
 double fn_rv[CELLS_COUNT];
 double fn_rw[CELLS_COUNT];
 double fn_E[CELLS_COUNT];
+//
+double gp_r[CELLS_COUNT];
+double gp_ru[CELLS_COUNT];
+double gp_rv[CELLS_COUNT];
+double gp_rw[CELLS_COUNT];
+double gp_E[CELLS_COUNT];
+double gn_r[CELLS_COUNT];
+double gn_ru[CELLS_COUNT];
+double gn_rv[CELLS_COUNT];
+double gn_rw[CELLS_COUNT];
+double gn_E[CELLS_COUNT];
+//
+double hp_r[CELLS_COUNT];
+double hp_ru[CELLS_COUNT];
+double hp_rv[CELLS_COUNT];
+double hp_rw[CELLS_COUNT];
+double hp_E[CELLS_COUNT];
+double hn_r[CELLS_COUNT];
+double hn_ru[CELLS_COUNT];
+double hn_rv[CELLS_COUNT];
+double hn_rw[CELLS_COUNT];
+double hn_E[CELLS_COUNT];
 
 // Вспомогательные данные расчетной области.
 // Тип ячейки:
@@ -102,11 +124,11 @@ calc_area_init()
     {
         int i = LIN(ix, iy, iz);
 
-        if (ix < left_cell_count)
+        if ((ix < left_cell_count) && (iy < left_cell_count))
         {
             r[i] = 1.0;
             u[i] = 0.75;
-            v[i] = 0.0;
+            v[i] = 0.5;
             w[i] = 0.0;
             p[i] = 1.0;
         }
@@ -369,7 +391,7 @@ u_to_d()
     }
 }
 
-// Вычисление f/g/h pos/neg.
+// Вычисление f pos/neg.
 void
 calc_f()
 {
@@ -403,11 +425,81 @@ calc_f()
     }
 }
 
+// Вычисление g pos/neg.
+void
+calc_g()
+{
+    LOOP1
+    {
+        double a = sqrt(GAMMA * p[i] / r[i]);
+        double l1 = v[i] - a;
+        double l2 = v[i];
+        double l5 = v[i] + a;
+        double lp1 = 0.5 * (l1 + abs(l1));
+        double lp2 = 0.5 * (l2 + abs(l2));
+        double lp5 = 0.5 * (l5 + abs(l5));
+        double ln1 = 0.5 * (l1 - abs(l1));
+        double ln2 = 0.5 * (l2 - abs(l2));
+        double ln5 = 0.5 * (l5 - abs(l5));
+        double k = 0.5 * r[i] / GAMMA;
+        double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
+        double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
+
+        gp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
+        gp_ru[i] = k * (u[i] * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + u[i] * lp5);
+        gp_rv[i] = k * ((v[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * v[i] * lp2 + (v[i] + a) * lp5);
+        gp_rw[i] = k * (w[i] * lp1 + 2.0 * (GAMMA - 1.0) * w[i] * lp2 + w[i] * lp5);
+        gp_E[i] = k * ((H - v[i] * a) * lp1 + (GAMMA - 1.0) * V2 * lp2 + (H + v[i] * a) * lp5);
+
+        gn_r[i] = k * (ln1 + 2.0 * (GAMMA - 1.0) * ln2 + ln5);
+        gn_ru[i] = k * (u[i] * ln1 + 2.0 * (GAMMA - 1.0) * u[i] * ln2 + u[i] * ln5);
+        gn_rv[i] = k * ((v[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + (v[i] + a) * ln5);
+        gn_rw[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + w[i] * ln5);
+        gn_E[i] = k * ((H - v[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + v[i] * a) * ln5);
+    }
+}
+
+// Вычисление h pos/neg.
+void
+calc_h()
+{
+    LOOP1
+    {
+        double a = sqrt(GAMMA * p[i] / r[i]);
+        double l1 = w[i] - a;
+        double l2 = w[i];
+        double l5 = w[i] + a;
+        double lp1 = 0.5 * (l1 + abs(l1));
+        double lp2 = 0.5 * (l2 + abs(l2));
+        double lp5 = 0.5 * (l5 + abs(l5));
+        double ln1 = 0.5 * (l1 - abs(l1));
+        double ln2 = 0.5 * (l2 - abs(l2));
+        double ln5 = 0.5 * (l5 - abs(l5));
+        double k = 0.5 * r[i] / GAMMA;
+        double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
+        double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
+
+        gp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
+        gp_ru[i] = k * (u[i] * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + u[i] * lp5);
+        gp_rv[i] = k * (v[i] * lp1 + 2.0 * (GAMMA - 1.0) * v[i] * lp2 + v[i] * lp5);
+        gp_rw[i] = k * ((w[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * w[i] * lp2 + (w[i] + a) * lp5);
+        gp_E[i] = k * ((H - w[i] * a) * lp1 + (GAMMA - 1.0) * V2 * lp2 + (H + w[i] * a) * lp5);
+
+        gn_r[i] = k * (ln1 + 2.0 * (GAMMA - 1.0) * ln2 + ln5);
+        gn_ru[i] = k * (u[i] * ln1 + 2.0 * (GAMMA - 1.0) * u[i] * ln2 + u[i] * ln5);
+        gn_rv[i] = k * (v[i] * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + v[i] * ln5);
+        gn_rw[i] = k * ((w[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + (w[i] + a) * ln5);
+        gn_E[i] = k * ((H - w[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + w[i] * a) * ln5);
+    }
+}
+
 // Вычисление f/g/h pos/neg.
 void
 calc_fgh()
 {
     calc_f();
+    calc_g();
+    calc_h();
 }
 
 // Вычисление потоков.
@@ -418,11 +510,12 @@ calc_flows()
 
     LOOP3
     {
+        int i = LIN(ix, iy, iz);
+
         //
         // Направление X.
         //
 
-        int i = LIN(ix, iy, iz);
         int li = i;
         int ri = i;
 
@@ -441,6 +534,52 @@ calc_flows()
         rv[i] -= (DT / DH) * (fp_rv[i] + fn_rv[ri] - fp_rv[li] - fn_rv[i]);
         rw[i] -= (DT / DH) * (fp_rw[i] + fn_rw[ri] - fp_rw[li] - fn_rw[i]);
         E[i] -= (DT / DH) * (fp_E[i] + fn_E[ri] - fp_E[li] - fn_E[i]);
+
+        //
+        // Направление Y.
+        //
+
+        li = i;
+        ri = i;
+
+        if (iy > 0)
+        {
+            li = LIN(ix, iy - 1, iz);
+        }
+
+        if (iy < NY - 1)
+        {
+            ri = LIN(ix, iy + 1, iz);
+        }
+
+        r[i] -= (DT / DH) * (gp_r[i] + gn_r[ri] - gp_r[li] - gn_r[i]);
+        ru[i] -= (DT / DH) * (gp_ru[i] + gn_ru[ri] - gp_ru[li] - gn_ru[i]);
+        rv[i] -= (DT / DH) * (gp_rv[i] + gn_rv[ri] - gp_rv[li] - gn_rv[i]);
+        rw[i] -= (DT / DH) * (gp_rw[i] + gn_rw[ri] - gp_rw[li] - gn_rw[i]);
+        E[i] -= (DT / DH) * (gp_E[i] + gn_E[ri] - gp_E[li] - gn_E[i]);
+
+        //
+        // Направление Z.
+        //
+
+        li = i;
+        ri = i;
+
+        if (iz > 0)
+        {
+            li = LIN(ix, iy, iz - 1);
+        }
+
+        if (iz < NZ - 1)
+        {
+            ri = LIN(ix, iy, iz + 1);
+        }
+
+        r[i] -= (DT / DH) * (hp_r[i] + hn_r[ri] - hp_r[li] - hn_r[i]);
+        ru[i] -= (DT / DH) * (hp_ru[i] + hn_ru[ri] - hp_ru[li] - hn_ru[i]);
+        rv[i] -= (DT / DH) * (hp_rv[i] + hn_rv[ri] - hp_rv[li] - hn_rv[i]);
+        rw[i] -= (DT / DH) * (hp_rw[i] + hn_rw[ri] - hp_rw[li] - hn_rw[i]);
+        E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
     }
 }
 
