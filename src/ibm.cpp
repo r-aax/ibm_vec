@@ -36,27 +36,27 @@ using namespace std;
 // Сохраняющиеся данные:
 //   - плотность импульса
 //   - плотность полной энергии
-float r[CELLS_COUNT];
-float u[CELLS_COUNT];
-float v[CELLS_COUNT];
-float w[CELLS_COUNT];
-float p[CELLS_COUNT];
+double r[CELLS_COUNT];
+double u[CELLS_COUNT];
+double v[CELLS_COUNT];
+double w[CELLS_COUNT];
+double p[CELLS_COUNT];
 //
-float ru[CELLS_COUNT];
-float rv[CELLS_COUNT];
-float rw[CELLS_COUNT];
-float E[CELLS_COUNT];
+double ru[CELLS_COUNT];
+double rv[CELLS_COUNT];
+double rw[CELLS_COUNT];
+double E[CELLS_COUNT];
 //
-float fp_r[CELLS_COUNT];
-float fp_ru[CELLS_COUNT];
-float fp_rv[CELLS_COUNT];
-float fp_rw[CELLS_COUNT];
-float fp_E[CELLS_COUNT];
-float fn_r[CELLS_COUNT];
-float fn_ru[CELLS_COUNT];
-float fn_rv[CELLS_COUNT];
-float fn_rw[CELLS_COUNT];
-float fn_E[CELLS_COUNT];
+double fp_r[CELLS_COUNT];
+double fp_ru[CELLS_COUNT];
+double fp_rv[CELLS_COUNT];
+double fp_rw[CELLS_COUNT];
+double fp_E[CELLS_COUNT];
+double fn_r[CELLS_COUNT];
+double fn_ru[CELLS_COUNT];
+double fn_rv[CELLS_COUNT];
+double fn_rw[CELLS_COUNT];
+double fn_E[CELLS_COUNT];
 
 // Вспомогательные данные расчетной области.
 // Тип ячейки:
@@ -71,21 +71,21 @@ float fn_E[CELLS_COUNT];
 int kind[CELLS_COUNT];
 
 // Данные сфер для обтекания.
-float sph_x[SPHERES_COUNT];
-float sph_y[SPHERES_COUNT];
-float sph_z[SPHERES_COUNT];
-float sph_r[SPHERES_COUNT];
+double sph_x[SPHERES_COUNT];
+double sph_y[SPHERES_COUNT];
+double sph_z[SPHERES_COUNT];
+double sph_r[SPHERES_COUNT];
 
 // Инициализация сферы.
 void
 sphere_init_xy(int i,
-               float sphere_x,
-               float sphere_y,
-               float sphere_r)
+               double sphere_x,
+               double sphere_y,
+               double sphere_r)
 {
     sph_x[i] = sphere_x;
     sph_y[i] = sphere_y;
-    sph_z[i] = (static_cast<float>(NZ) / 2.0);
+    sph_z[i] = (static_cast<double>(NZ) / 2.0);
     sph_r[i] = sphere_r;
 }
 
@@ -137,22 +137,22 @@ calc_area_define_cells_kinds()
     LOOP3
     {
         int i = LIN(ix, iy, iz);
-        float xl = DH * static_cast<float>(ix);
-        float xr = DH * static_cast<float>(ix + 1);
-        float yl = DH * static_cast<float>(iy);
-        float yr = DH * static_cast<float>(iy + 1);
-        float zl = DH * static_cast<float>(iz);
-        float zr = DH * static_cast<float>(iz + 1);
+        double xl = DH * static_cast<double>(ix);
+        double xr = DH * static_cast<double>(ix + 1);
+        double yl = DH * static_cast<double>(iy);
+        double yr = DH * static_cast<double>(iy + 1);
+        double zl = DH * static_cast<double>(iz);
+        double zr = DH * static_cast<double>(iz + 1);
 
         for (int si = 0; si < SPHERES_COUNT; si++)
         {
-            float dxl2 = MTH_DIFF2(xl, sph_x[si]);
-            float dxr2 = MTH_DIFF2(xr, sph_x[si]);
-            float dyl2 = MTH_DIFF2(yl, sph_y[si]);
-            float dyr2 = MTH_DIFF2(yr, sph_y[si]);
-            float dzl2 = MTH_DIFF2(zl, sph_z[si]);
-            float dzr2 = MTH_DIFF2(zr, sph_z[si]);
-            float r2 = sph_r[si] * sph_r[si];
+            double dxl2 = MTH_DIFF2(xl, sph_x[si]);
+            double dxr2 = MTH_DIFF2(xr, sph_x[si]);
+            double dyl2 = MTH_DIFF2(yl, sph_y[si]);
+            double dyr2 = MTH_DIFF2(yr, sph_y[si]);
+            double dzl2 = MTH_DIFF2(zl, sph_z[si]);
+            double dzr2 = MTH_DIFF2(zr, sph_z[si]);
+            double r2 = sph_r[si] * sph_r[si];
             int lll_in = static_cast<int>(dxl2 + dyl2 + dzl2 <= r2);
             int llr_in = static_cast<int>(dxl2 + dyl2 + dzr2 <= r2);
             int lrl_in = static_cast<int>(dxl2 + dyr2 + dzl2 <= r2);
@@ -179,9 +179,9 @@ calc_area_define_cells_kinds()
             }
             else
             {
-                float xc = MTH_AVG(xl, xr);
-                float yc = MTH_AVG(yl, yr);
-                float zc = MTH_AVG(zl, zr);
+                double xc = MTH_AVG(xl, xr);
+                double yc = MTH_AVG(yl, yr);
+                double zc = MTH_AVG(zl, zr);
 
                 if (MTH_DIST2(xc, yc, zc, sph_x[si], sph_y[si], sph_z[si]) <= r2)
                 {
@@ -375,19 +375,19 @@ calc_f()
 {
     LOOP1
     {
-        float a = sqrt(GAMMA * p[i] / r[i]);
-        float l1 = u[i] - a;
-        float l2 = u[i];
-        float l5 = u[i] + a;
-        float lp1 = 0.5 * (l1 + abs(l1));
-        float lp2 = 0.5 * (l2 + abs(l2));
-        float lp5 = 0.5 * (l5 + abs(l5));
-        float ln1 = 0.5 * (l1 - abs(l1));
-        float ln2 = 0.5 * (l2 - abs(l2));
-        float ln5 = 0.5 * (l5 - abs(l5));
-        float k = 0.5 * r[i] / GAMMA;
-        float V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
-        float H = 0.5 * V2 + a * a / (GAMMA - 1.0);
+        double a = sqrt(GAMMA * p[i] / r[i]);
+        double l1 = u[i] - a;
+        double l2 = u[i];
+        double l5 = u[i] + a;
+        double lp1 = 0.5 * (l1 + abs(l1));
+        double lp2 = 0.5 * (l2 + abs(l2));
+        double lp5 = 0.5 * (l5 + abs(l5));
+        double ln1 = 0.5 * (l1 - abs(l1));
+        double ln2 = 0.5 * (l2 - abs(l2));
+        double ln5 = 0.5 * (l5 - abs(l5));
+        double k = 0.5 * r[i] / GAMMA;
+        double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
+        double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
 
         fp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
         fp_ru[i] = k * ((u[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + (u[i] + a) * lp5);
