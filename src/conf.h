@@ -7,7 +7,7 @@
 // Область 10 * 5.
 #define NX 100
 #define NY 50
-#define NZ 1
+#define NZ 2
 
 // Шаг по пространству и по времени.
 #define DH 0.1  // м

@@ -22,7 +22,7 @@ using namespace std;
 #define CELLS_COUNT (NX * NY * NZ)
 
 // Линеаризация индекса.
-#define LIN(IX, IY, IZ) ((IZ * NY + IY) * NX + IX)
+#define LIN(IX, IY, IZ) (((IZ) * NY + (IY)) * NX + (IX))
 
 // Определение циклов.
 #define LOOP1 for (int i = 0; i < CELLS_COUNT; i++)
@@ -89,6 +89,11 @@ double p0_z[CELLS_COUNT];
 double p0_normal_x[CELLS_COUNT];
 double p0_normal_y[CELLS_COUNT];
 double p0_normal_z[CELLS_COUNT];
+
+// Три точки для шаблона.
+int t1[CELLS_COUNT];
+int t2[CELLS_COUNT];
+int t3[CELLS_COUNT];
 
 // Вспомогательные данные расчетной области.
 // Тип ячейки:
@@ -399,6 +404,29 @@ calc_nearest_sphere_points_and_normals()
     }
 }
 
+// Определение расчетных шаблонов.
+void
+define_templates()
+{
+    LOOP3
+    {
+        int i = LIN(ix, iy, iz);
+
+        if (kind[i] == KIND_GHOST)
+        {
+            t1[i] = 0;
+            t2[i] = 0;
+            t3[i] = 0;
+        }
+        else
+        {
+            t1[i] = 0;
+            t2[i] = 0;
+            t3[i] = 0;
+        }
+    }
+}
+
 // Экспорт в ParaView.
 void
 calc_area_paraview_export(int i)
@@ -408,13 +436,16 @@ calc_area_paraview_export(int i)
     ofstream f(ss.str());
 
     f << "TITLE=\"[" << NX << " * " << NY << " * " << NZ << "] calc area\"" << endl;
-    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Rho\", \"U\", \"V\", \"W\", \"P\", \"Kind\", \"P0X\", \"P0Y\", \"P0Z\", \"P0NormalX\", \"P0NormalY\", \"P0NormalZ\"" << endl;
+    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Id\""
+      << "\"Rho\", \"U\", \"V\", \"W\", \"P\", "
+      << "\"Kind\", \"P0X\", \"P0Y\", \"P0Z\", \"P0NormalX\", \"P0NormalY\", \"P0NormalZ\", "
+      << "\"T1\", \"T2\", \"T3\"" << endl;
     f << "ZONE T=\"single zone\"" << endl;
     f << "NODES=" << (8 * CELLS_COUNT) << endl;
     f << "ELEMENTS=" << CELLS_COUNT << endl;
     f << "DATAPACKING=BLOCK" << endl;
     f << "ZONETYPE=FEBRICK" << endl;
-    f << "VARLOCATION=([4-15]=CELLCENTERED)" << endl;
+    f << "VARLOCATION=([4-19]=CELLCENTERED)" << endl;
 
 #define LX (ix * DH)
 #define HX ((ix + 1) * DH)
@@ -426,6 +457,7 @@ calc_area_paraview_export(int i)
     LOOP3 f << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " "; f << endl;
     LOOP3 f << LY << " " << LY << " " << HY << " " << HY << " " << LY << " " << LY << " " << HY << " " << HY << " "; f << endl;
     LOOP3 f << LZ << " " << LZ << " " << LZ << " " << LZ << " " << HZ << " " << HZ << " " << HZ << " " << HZ << " "; f << endl;
+    LOOP1 f << i << " "; f << endl;
     LOOP1 f << r[i] << " "; f << endl;
     LOOP1 f << u[i] << " "; f << endl;
     LOOP1 f << v[i] << " "; f << endl;
@@ -438,6 +470,9 @@ calc_area_paraview_export(int i)
     LOOP1 f << p0_normal_x[i] << " "; f << endl;
     LOOP1 f << p0_normal_y[i] << " "; f << endl;
     LOOP1 f << p0_normal_z[i] << " "; f << endl;
+    LOOP1 f << t1[i] << " "; f << endl;
+    LOOP1 f << t2[i] << " "; f << endl;
+    LOOP1 f << t3[i] << " "; f << endl;
 
 #undef LX
 #undef HX
@@ -698,6 +733,7 @@ main()
     calc_area_init();
     calc_area_define_cells_kinds();
     calc_nearest_sphere_points_and_normals();
+    define_templates();
     calc_area_paraview_export(0);
 
     /*
