@@ -20,6 +20,6 @@
 #define GAMMA 1.4
 
 // Количество шаров для обтекания.
-#define SPHERES_COUNT 1
+#define SPHERES_COUNT 5
 
 #endif

@@ -95,6 +95,10 @@ int t1[CELLS_COUNT];
 int t2[CELLS_COUNT];
 int t3[CELLS_COUNT];
 
+// Данные для экспорта.
+int export_ids[CELLS_COUNT];
+int export_count;
+
 // Вспомогательные данные расчетной области.
 // Тип ячейки:
 //   0 - обычная расчетная ячейка.
@@ -159,10 +163,10 @@ calc_area_init()
 
     // Инициализация сфер.
     sphere_init_xy(0,  2.0, 2.0, 1.05);
-    //sphere_init_xy(1,  4.0, 4.0, 0.75);
-    //sphere_init_xy(2,  5.0, 1.0, 0.75);
-    //sphere_init_xy(3,  7.0, 2.5, 1.15);
-    //sphere_init_xy(4, 10.0, 0.0, 1.05);
+    sphere_init_xy(1,  4.0, 4.0, 0.75);
+    sphere_init_xy(2,  5.0, 1.0, 0.75);
+    sphere_init_xy(3,  7.0, 2.5, 1.15);
+    sphere_init_xy(4, 10.0, 0.0, 1.05);
 }
 
 // Определение типов ячеек.
@@ -326,6 +330,19 @@ calc_area_define_cells_kinds()
         if (kind[i] == KIND_BORDER)
         {
             kind[i] = KIND_COMMON;
+        }
+    }
+
+    // Инициализация данных экспорта
+
+    export_count = 0;
+
+    LOOP1
+    {
+        if (kind[i] != KIND_INNER)
+        {
+            export_ids[export_count] = i;
+            export_count++;
         }
     }
 }
@@ -509,13 +526,13 @@ calc_area_paraview_export(int i)
     ofstream f(ss.str());
 
     f << "TITLE=\"[" << NX << " * " << NY << " * " << NZ << "] calc area\"" << endl;
-    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Id\""
+    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Id\", "
       << "\"Rho\", \"U\", \"V\", \"W\", \"P\", "
       << "\"Kind\", \"P0X\", \"P0Y\", \"P0Z\", \"P0NormalX\", \"P0NormalY\", \"P0NormalZ\", "
       << "\"T1\", \"T2\", \"T3\"" << endl;
     f << "ZONE T=\"single zone\"" << endl;
-    f << "NODES=" << (8 * CELLS_COUNT) << endl;
-    f << "ELEMENTS=" << CELLS_COUNT << endl;
+    f << "NODES=" << (8 * export_count) << endl;
+    f << "ELEMENTS=" << export_count << endl;
     f << "DATAPACKING=BLOCK" << endl;
     f << "ZONETYPE=FEBRICK" << endl;
     f << "VARLOCATION=([4-19]=CELLCENTERED)" << endl;
@@ -527,25 +544,37 @@ calc_area_paraview_export(int i)
 #define LZ (iz * DH)
 #define HZ ((iz + 1) * DH)
 
-    LOOP3 f << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " "; f << endl;
-    LOOP3 f << LY << " " << LY << " " << HY << " " << HY << " " << LY << " " << LY << " " << HY << " " << HY << " "; f << endl;
-    LOOP3 f << LZ << " " << LZ << " " << LZ << " " << LZ << " " << HZ << " " << HZ << " " << HZ << " " << HZ << " "; f << endl;
-    LOOP1 f << i << " "; f << endl;
-    LOOP1 f << r[i] << " "; f << endl;
-    LOOP1 f << u[i] << " "; f << endl;
-    LOOP1 f << v[i] << " "; f << endl;
-    LOOP1 f << w[i] << " "; f << endl;
-    LOOP1 f << p[i] << " "; f << endl;
-    LOOP1 f << kind[i] << " "; f << endl;
-    LOOP1 f << p0_x[i] << " "; f << endl;
-    LOOP1 f << p0_y[i] << " "; f << endl;
-    LOOP1 f << p0_z[i] << " "; f << endl;
-    LOOP1 f << p0_normal_x[i] << " "; f << endl;
-    LOOP1 f << p0_normal_y[i] << " "; f << endl;
-    LOOP1 f << p0_normal_z[i] << " "; f << endl;
-    LOOP1 f << t1[i] << " "; f << endl;
-    LOOP1 f << t2[i] << " "; f << endl;
-    LOOP1 f << t3[i] << " "; f << endl;
+    LOOP3
+        if (kind[LIN(ix, iy, iz)] != KIND_INNER)
+            f << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " " << LX << " " << HX << " ";
+    f << endl;
+
+    LOOP3
+        if (kind[LIN(ix, iy, iz)] != KIND_INNER)
+            f << LY << " " << LY << " " << HY << " " << HY << " " << LY << " " << LY << " " << HY << " " << HY << " ";
+    f << endl;
+
+    LOOP3
+        if (kind[LIN(ix, iy, iz)] != KIND_INNER)
+            f << LZ << " " << LZ << " " << LZ << " " << LZ << " " << HZ << " " << HZ << " " << HZ << " " << HZ << " ";
+    f << endl;
+
+    for(int i = 0; i < export_count; i++) f << i << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << r[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << u[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << v[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << w[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << kind[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p0_x[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p0_y[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p0_z[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p0_normal_x[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p0_normal_y[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << p0_normal_z[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << t1[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << t2[export_ids[i]] << " "; f << endl;
+    for(int i = 0; i < export_count; i++) f << t3[export_ids[i]] << " "; f << endl;
 
 #undef LX
 #undef HX
@@ -554,7 +583,7 @@ calc_area_paraview_export(int i)
 #undef LZ
 #undef HZ
 
-    LOOP1
+    for (int i = 0; i < export_count; i++)
     {
         int s = 8 * i;
 
