@@ -80,6 +80,16 @@ double hn_rv[CELLS_COUNT];
 double hn_rw[CELLS_COUNT];
 double hn_E[CELLS_COUNT];
 
+// Координаты ближайшей точки на обтекаемой формы.
+double p0_x[CELLS_COUNT];
+double p0_y[CELLS_COUNT];
+double p0_z[CELLS_COUNT];
+
+// Координаты нормали в точке поверхности.
+double p0_normal_x[CELLS_COUNT];
+double p0_normal_y[CELLS_COUNT];
+double p0_normal_z[CELLS_COUNT];
+
 // Вспомогательные данные расчетной области.
 // Тип ячейки:
 //   0 - обычная расчетная ячейка.
@@ -107,7 +117,7 @@ sphere_init_xy(int i,
 {
     sph_x[i] = sphere_x;
     sph_y[i] = sphere_y;
-    sph_z[i] = (static_cast<double>(NZ) / 2.0);
+    sph_z[i] = (static_cast<double>(NZ) / 2.0) * DH;
     sph_r[i] = sphere_r;
 }
 
@@ -306,6 +316,89 @@ calc_area_define_cells_kinds()
     }
 }
 
+// Вычисление для фиктивных ячеек следующих величин:
+// координаты ближайшей точки на сфере,
+// нормаль в этой точке.
+void
+calc_nearest_sphere_points_and_normals()
+{
+    LOOP3
+    {
+        int i = LIN(ix, iy, iz);
+
+        if (kind[i] == KIND_GHOST)
+        {
+            double x = (static_cast<double>(ix) + 0.5) * DH;
+            double y = (static_cast<double>(iy) + 0.5) * DH;
+            double z = (static_cast<double>(iz) + 0.5) * DH;
+            double sx = 0.0;
+            double sy = 0.0;
+            double sz = 0.0;
+            double sr = 0.0;
+            double d = 0.0;
+
+            int min_si = 0;
+            double min_d = (static_cast<double>(NX + NY + NZ)) * DH; // заведомо большое расстояние
+
+            for (int si = 0; si < SPHERES_COUNT; si++)
+            {
+                sx = sph_x[si];
+                sy = sph_y[si];
+                sz = sph_z[si];
+                sr = sph_r[si];
+                d = dist_to_sphere(x, y, z, sx, sy, sz, sr);
+
+                if (d < min_d)
+                {
+                    min_si = si;
+                    min_d = d;
+                }
+            }
+
+            // Рассматривается сфера с индексом si.
+            sx = sph_x[min_si];
+            sy = sph_y[min_si];
+            sz = sph_z[min_si];
+            sr = sph_r[min_si];
+            d = dist_to_sphere(x, y, z, sx, sy, sz, sr);
+
+            double dist_to_center = dist_to_point(x, y, z, sx, sy, sz);
+
+            if (dist_to_center > sr)
+            {
+                // Точка снаружи сферы.
+                // Это странно, если фиктивная ячейка находится внутри сферы.
+                cout << "Internal error : ghost cell is outside sphere." << endl;
+                exit(1);
+            }
+            else
+            {
+                // Точка внутри сферы.
+
+                // Инициализация координат точек на сфере.
+                p0_x[i] = x + (sx - x) * (-d / dist_to_center);
+                p0_y[i] = y + (sy - y) * (-d / dist_to_center);
+                p0_z[i] = z + (sz - z) * (-d / dist_to_center);
+
+                // Инициализация нормалей.
+                p0_normal_x[i] = (x - sx) / sr;
+                p0_normal_y[i] = (y - sy) / sr;
+                p0_normal_z[i] = (z - sz) / sr;
+            }
+        }
+        else
+        {
+            p0_x[i] = 0.0;
+            p0_y[i] = 0.0;
+            p0_z[i] = 0.0;
+
+            p0_normal_x[i] = 0.0;
+            p0_normal_y[i] = 0.0;
+            p0_normal_z[i] = 0.0;
+        }
+    }
+}
+
 // Экспорт в ParaView.
 void
 calc_area_paraview_export(int i)
@@ -315,13 +408,13 @@ calc_area_paraview_export(int i)
     ofstream f(ss.str());
 
     f << "TITLE=\"[" << NX << " * " << NY << " * " << NZ << "] calc area\"" << endl;
-    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Rho\", \"U\", \"V\", \"W\", \"P\", \"Kind\"" << endl;
+    f << "VARIABLES=\"X\", \"Y\", \"Z\", \"Rho\", \"U\", \"V\", \"W\", \"P\", \"Kind\", \"P0X\", \"P0Y\", \"P0Z\", \"P0NormalX\", \"P0NormalY\", \"P0NormalZ\"" << endl;
     f << "ZONE T=\"single zone\"" << endl;
     f << "NODES=" << (8 * CELLS_COUNT) << endl;
     f << "ELEMENTS=" << CELLS_COUNT << endl;
     f << "DATAPACKING=BLOCK" << endl;
     f << "ZONETYPE=FEBRICK" << endl;
-    f << "VARLOCATION=([4-9]=CELLCENTERED)" << endl;
+    f << "VARLOCATION=([4-15]=CELLCENTERED)" << endl;
 
 #define LX (ix * DH)
 #define HX ((ix + 1) * DH)
@@ -339,6 +432,12 @@ calc_area_paraview_export(int i)
     LOOP1 f << w[i] << " "; f << endl;
     LOOP1 f << p[i] << " "; f << endl;
     LOOP1 f << kind[i] << " "; f << endl;
+    LOOP1 f << p0_x[i] << " "; f << endl;
+    LOOP1 f << p0_y[i] << " "; f << endl;
+    LOOP1 f << p0_z[i] << " "; f << endl;
+    LOOP1 f << p0_normal_x[i] << " "; f << endl;
+    LOOP1 f << p0_normal_y[i] << " "; f << endl;
+    LOOP1 f << p0_normal_z[i] << " "; f << endl;
 
 #undef LX
 #undef HX
@@ -598,8 +697,10 @@ main()
 {
     calc_area_init();
     calc_area_define_cells_kinds();
+    calc_nearest_sphere_points_and_normals();
     calc_area_paraview_export(0);
 
+    /*
     for (int i = 0; i < TIME_STEPS; i++)
     {
         cout << ".... step " << i << " of " << TIME_STEPS << endl;
@@ -607,4 +708,5 @@ main()
         step();
         calc_area_paraview_export(i + 1);
     }
+    */
 }

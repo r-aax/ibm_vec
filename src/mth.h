@@ -12,6 +12,25 @@
 // Квадрат рассмояния между точками.
 #define MTH_DIST2(X1, Y1, Z1, X2, Y2, Z2) (MTH_DIFF2(X1, X2) + MTH_DIFF2(Y1, Y2) + MTH_DIFF2(Z1, Z2))
 
+// Расстояние до точки.
+double
+dist_to_point(double x,
+              double y,
+              double z,
+              double cx,
+              double cy,
+              double cz);
+
+// Расстояние до сферы.
+double
+dist_to_sphere(double x,
+               double y,
+               double z,
+               double sx,
+               double sy,
+               double sz,
+               double r);
+
 // Печать матрицы 4*4.
 void
 m4x4_print(double (&m)[4][4]);

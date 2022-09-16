@@ -13,6 +13,35 @@
 
 using namespace std;
 
+// Расстояние до точки.
+double
+dist_to_point(double x,
+              double y,
+              double z,
+              double cx,
+              double cy,
+              double cz)
+{
+    return sqrt(MTH_DIST2(x, y, z, cx, cy, cz));
+}
+
+// Расстояние до сферы.
+double
+dist_to_sphere(double x,
+               double y,
+               double z,
+               double sx,
+               double sy,
+               double sz,
+               double r)
+{
+    double d = MTH_DIST2(x, y, z, sx, sy, sz);
+
+    d = sqrt(d);
+
+    return abs(d - r);
+}
+
 // Печать матрицы 4*4.
 void
 m4x4_print(double (&m)[4][4])
