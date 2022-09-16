@@ -159,10 +159,10 @@ calc_area_init()
 
     // Инициализация сфер.
     sphere_init_xy(0,  2.0, 2.0, 1.05);
-    sphere_init_xy(1,  4.0, 4.0, 0.75);
-    sphere_init_xy(2,  5.0, 1.0, 0.75);
-    sphere_init_xy(3,  7.0, 2.5, 1.15);
-    sphere_init_xy(4, 10.0, 0.0, 1.05);
+    //sphere_init_xy(1,  4.0, 4.0, 0.75);
+    //sphere_init_xy(2,  5.0, 1.0, 0.75);
+    //sphere_init_xy(3,  7.0, 2.5, 1.15);
+    //sphere_init_xy(4, 10.0, 0.0, 1.05);
 }
 
 // Определение типов ячеек.
@@ -319,6 +319,15 @@ calc_area_define_cells_kinds()
             }
         }
     }
+
+    // Превращаем все граничные ячейки в обычные.
+    LOOP1
+    {
+        if (kind[i] == KIND_BORDER)
+        {
+            kind[i] = KIND_COMMON;
+        }
+    }
 }
 
 // Вычисление для фиктивных ячеек следующих величин:
@@ -404,6 +413,70 @@ calc_nearest_sphere_points_and_normals()
     }
 }
 
+// Поиск шаблона.
+void
+find_templates_points(int ix,
+                      int iy,
+                      int iz,
+                      int *tt[])
+{
+    int i = 0;
+    int lxs[3];
+    int lys[3];
+    int lzs[3];
+
+    for (int lx = ix - 1; lx <= ix + 1; lx++)
+    {
+        for (int ly = iy - 1; ly <= iy + 1; ly++)
+        {
+            for (int lz = iz - 1; lz <= iz + 1; lz++)
+            {
+                if ((lx >= 0) && (lx <= NX - 1)
+                    && (ly >= 0) && (ly <= NY - 1)
+                    && (lz >= 0) && (lz <= NZ - 1))
+                {
+                    int bi = LIN(lx, ly, lz);
+
+                    if (kind[bi] == KIND_COMMON)
+                    {
+                        // Добавляем точку.
+
+                        lxs[i] = lx;
+                        lys[i] = ly;
+                        lzs[i] = lz;
+                        *tt[i] = bi;
+
+                        if (i < 2)
+                        {
+                            // Еще не все точки добавлены, продолжаем.
+
+                            i++;
+                        }
+                        else
+                        {
+                            // Все точки добавлены,
+                            // осталось только проверить, что эти точки не лежат на одной прямой.
+
+                            if ((lxs[2] - lxs[1] == lxs[1] - lxs[0])
+                                && (lys[2] - lys[1] == lys[1] - lys[0])
+                                && (lzs[2] - lzs[1] == lzs[1] - lzs[0]))
+                            {
+                                // Точки лежат на одной прямой, надо искать другую точку.
+                                continue;
+                            }
+                            else
+                            {
+                                // Точки не на одной прямой, можно заканчивать.
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Определение расчетных шаблонов.
 void
 define_templates()
@@ -414,9 +487,9 @@ define_templates()
 
         if (kind[i] == KIND_GHOST)
         {
-            t1[i] = 0;
-            t2[i] = 0;
-            t3[i] = 0;
+            int *tt[] = { &t1[i], &t2[i], &t3[i] };
+
+            find_templates_points(ix, iy, iz, tt);
         }
         else
         {
