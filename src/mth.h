@@ -40,6 +40,45 @@ void
 m4x4_print_duplex(double (&a)[4][4],
                   double (&b)[4][4]);
 
+// Инициализация вектора.
+void
+m4x4_init_vec(double (&v)[4],
+              double v0,
+              double v1,
+              double v2,
+              double v3);
+
+// Инициализация матрицы.
+void
+m4x4_init_mat(double (&m)[4][4],
+              double m00,
+              double m01,
+              double m02,
+              double m03,
+              double m10,
+              double m11,
+              double m12,
+              double m13,
+              double m20,
+              double m21,
+              double m22,
+              double m23,
+              double m30,
+              double m31,
+              double m32,
+              double m33);
+
+// Скалярное произведение векторов.
+double
+m4x4_scalar_product(double (&a)[4],
+                    double (&b)[4]);
+
+// Умножение матрицы на вектор-столбец.
+void
+m4x4_mul_on_vec(double (&m)[4][4],
+                double (&v)[4],
+                double (&r)[4]);
+
 // Перемножение матриц 4*4.
 void
 m4x4_mul(double (&a)[4][4],

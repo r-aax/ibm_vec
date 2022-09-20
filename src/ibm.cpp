@@ -24,6 +24,14 @@ using namespace std;
 // Линеаризация индекса.
 #define LIN(IX, IY, IZ) (((IZ) * NY + (IY)) * NX + (IX))
 
+// Получение координат из линеаризованного номера.
+#define UNLINX(I) ((I) % (NX))
+#define UNLINY(I) (((I) / (NX)) % (NY))
+#define UNLINZ(I) ((I) / ((NX) * (NY)))
+
+// Перевод индекса в координату центра.
+#define CCORD(I) ((static_cast<double>(I) + 0.5) * DH)
+
 // Определение циклов.
 #define LOOP1 for (int i = 0; i < CELLS_COUNT; i++)
 #define LOOP3 for (int iz = 0; iz < NZ; iz++) for (int iy = 0; iy < NY; iy++) for (int ix = 0; ix < NX; ix++)
@@ -840,10 +848,78 @@ calc_flows()
     }
 }
 
+// Аппроксимация значений в фиктивных ячейках.
+void
+approximate_values()
+{
+    LOOP3
+    {
+        int i = LIN(ix, iy, iz);
+
+        if (kind[i] == KIND_GHOST)
+        {
+            // Требуется выполнить следующую аппроксимацию:
+            // 1. Плотность - скалярная величина.
+            // 2. Давление - скалярная величина.
+            // 3. Скорость - векторная величина.
+
+            int tmpl1 = t1[i];
+            int tmpl2 = t2[i];
+            int tmpl3 = t3[i];
+            int tmpl1x = UNLINX(tmpl1);
+            int tmpl1y = UNLINY(tmpl1);
+            int tmpl1z = UNLINZ(tmpl1);
+            int tmpl2x = UNLINX(tmpl2);
+            int tmpl2y = UNLINY(tmpl2);
+            int tmpl2z = UNLINZ(tmpl2);
+            int tmpl3x = UNLINX(tmpl3);
+            int tmpl3y = UNLINY(tmpl3);
+            int tmpl3z = UNLINZ(tmpl3);
+            double x1 = CCORD(tmpl1x);
+            double y1 = CCORD(tmpl1y);
+            double z1 = CCORD(tmpl1z);
+            double x2 = CCORD(tmpl2x);
+            double y2 = CCORD(tmpl2y);
+            double z2 = CCORD(tmpl2z);
+            double x3 = CCORD(tmpl3x);
+            double y3 = CCORD(tmpl3y);
+            double z3 = CCORD(tmpl3z);
+            double mat_b[4][4];
+            double mat_b_inv[4][4];
+            double vec_phi[4];
+            double vec_a[4];
+            double vec_1xyz[4];
+
+            m4x4_init_vec(vec_1xyz,
+                          1.0, CCORD(ix), CCORD(iy), CCORD(iz));
+
+            // Аппроксимация плотности.
+            m4x4_init_mat(mat_b,
+                          0.0, p0_normal_x[i], p0_normal_y[i], p0_normal_z[i],
+                          1.0, x1, y1, z1,
+                          1.0, x2, y2, z2,
+                          1.0, x3, y3, z3);
+            m4x4_invert(mat_b, mat_b_inv);
+            m4x4_init_vec(vec_phi,
+                          0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
+            m4x4_mul_on_vec(mat_b_inv, vec_phi, vec_a);
+            r[i] = m4x4_scalar_product(vec_a, vec_1xyz);
+
+            // Аппроксимация давления.
+            // Матрица B та же, надо только поменять phi.
+            m4x4_init_vec(vec_phi,
+                          0.0, p[tmpl1], p[tmpl2], p[tmpl3]);
+            m4x4_mul_on_vec(mat_b_inv, vec_phi, vec_a);
+            p[i] = m4x4_scalar_product(vec_a, vec_1xyz);
+        }
+    }
+}
+
 // Шаг вычислений.
 void
 step()
 {
+    approximate_values();
     d_to_u();
     calc_flows();
     u_to_d();
