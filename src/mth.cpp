@@ -42,6 +42,23 @@ dist_to_sphere(double x,
     return abs(d - r);
 }
 
+// Печать вектора длины 4.
+void
+m4x4_print_vec(double (&v)[4])
+{
+    cout << "Vector 4 : " << endl;
+    cout << "--------------------------------" << endl;
+
+    for (int j = 0; j < 4; j++)
+    {
+        cout << setw(10) << v[j] << " ";
+    }
+
+    cout << endl;
+
+    cout << "--------------------------------" << endl;
+}
+
 // Печать матрицы 4*4.
 void
 m4x4_print(double (&m)[4][4])

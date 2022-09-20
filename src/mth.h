@@ -31,6 +31,10 @@ dist_to_sphere(double x,
                double sz,
                double r);
 
+// Печать вектора длины 4.
+void
+m4x4_print_vec(double (&v)[4]);
+
 // Печать матрицы 4*4.
 void
 m4x4_print(double (&m)[4][4]);

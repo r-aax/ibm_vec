@@ -639,6 +639,22 @@ u_to_d()
             // E = rho * V^2/2 + p/(GAMMA - 1.0)
             // p = (E - rho * V^2/2) * (GAMMA - 1.0)
             p[i] = (E[i] - 0.5 * r[i] * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i])) * (GAMMA - 1.0);
+
+            // Плотность, давление и энергия это положительные величины.
+            if ((r[i] <= 0.0) || (p[i] <= 0.0) || (E[i] <= 0.0))
+            {
+                cout << "Error : u_to_d : negative density, pressure of energy." << endl;
+                cout << "r / p / E = " << r[i] << " / " << p[i] << " / " << E[i] << endl;
+                exit(1);
+            }
+
+            if (isnan(r[i]) || isnan(u[i]) || isnan(v[i]) || isnan(w[i]) || isnan(p[i]))
+            {
+                cout << "Error : u_to_d : not a number." << endl;
+                cout << "r / ru / rv / rw / E = " << r[i] << " / " << ru[i] << " / " << rv[i] << " / " << rw[i] << " / " << E[i] << endl;
+                cout << "r / u / v / w / p = " << r[i] << " / " << u[i] << " / " << v[i] << " / " << w[i] << " / " << p[i] << endl;
+                exit(1);
+            }
         }
     }
 }
@@ -676,6 +692,13 @@ calc_f()
             fn_rv[i] = k * (v[i] * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + v[i] * ln5);
             fn_rw[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + w[i] * ln5);
             fn_E[i] = k * ((H - u[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + u[i] * a) * ln5);
+
+            if (isnan(fp_r[i]) || isnan(fn_r[i]))
+            {
+                cout << "Error : calc_f : fp_r / fn_r is not a number." << endl;
+                cout << "fp_r / fn_r = " << fp_r[i] << ", " << fn_r[i] << endl;
+                exit(1);
+            }
         }
     }
 }
@@ -713,6 +736,13 @@ calc_g()
             gn_rv[i] = k * ((v[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + (v[i] + a) * ln5);
             gn_rw[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + w[i] * ln5);
             gn_E[i] = k * ((H - v[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + v[i] * a) * ln5);
+
+            if (isnan(gp_r[i]) || isnan(gn_r[i]))
+            {
+                cout << "Error : calc_g : gp_r / gn_r is not a number." << endl;
+                cout << "gp_r / gn_r = " << gp_r[i] << ", " << gn_r[i] << endl;
+                exit(1);
+            }
         }
     }
 }
@@ -739,17 +769,24 @@ calc_h()
             double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
             double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
 
-            gp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
-            gp_ru[i] = k * (u[i] * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + u[i] * lp5);
-            gp_rv[i] = k * (v[i] * lp1 + 2.0 * (GAMMA - 1.0) * v[i] * lp2 + v[i] * lp5);
-            gp_rw[i] = k * ((w[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * w[i] * lp2 + (w[i] + a) * lp5);
-            gp_E[i] = k * ((H - w[i] * a) * lp1 + (GAMMA - 1.0) * V2 * lp2 + (H + w[i] * a) * lp5);
+            hp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
+            hp_ru[i] = k * (u[i] * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + u[i] * lp5);
+            hp_rv[i] = k * (v[i] * lp1 + 2.0 * (GAMMA - 1.0) * v[i] * lp2 + v[i] * lp5);
+            hp_rw[i] = k * ((w[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * w[i] * lp2 + (w[i] + a) * lp5);
+            hp_E[i] = k * ((H - w[i] * a) * lp1 + (GAMMA - 1.0) * V2 * lp2 + (H + w[i] * a) * lp5);
 
-            gn_r[i] = k * (ln1 + 2.0 * (GAMMA - 1.0) * ln2 + ln5);
-            gn_ru[i] = k * (u[i] * ln1 + 2.0 * (GAMMA - 1.0) * u[i] * ln2 + u[i] * ln5);
-            gn_rv[i] = k * (v[i] * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + v[i] * ln5);
-            gn_rw[i] = k * ((w[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + (w[i] + a) * ln5);
-            gn_E[i] = k * ((H - w[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + w[i] * a) * ln5);
+            hn_r[i] = k * (ln1 + 2.0 * (GAMMA - 1.0) * ln2 + ln5);
+            hn_ru[i] = k * (u[i] * ln1 + 2.0 * (GAMMA - 1.0) * u[i] * ln2 + u[i] * ln5);
+            hn_rv[i] = k * (v[i] * ln1 + 2.0 * (GAMMA - 1.0) * v[i] * ln2 + v[i] * ln5);
+            hn_rw[i] = k * ((w[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + (w[i] + a) * ln5);
+            hn_E[i] = k * ((H - w[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + w[i] * a) * ln5);
+
+            if (isnan(hp_r[i]) || isnan(hn_r[i]))
+            {
+                cout << "Error : calc_h : hp_r / hn_r is not a number." << endl;
+                cout << "hp_r / hn_r = " << hp_r[i] << ", " << hn_r[i] << endl;
+                exit(1);
+            }
         }
     }
 }
@@ -844,6 +881,13 @@ calc_flows()
             rv[i] -= (DT / DH) * (hp_rv[i] + hn_rv[ri] - hp_rv[li] - hn_rv[i]);
             rw[i] -= (DT / DH) * (hp_rw[i] + hn_rw[ri] - hp_rw[li] - hn_rw[i]);
             E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
+
+            if (isnan(r[i]))
+            {
+                cout << "Error : calc_flows : density is not a number.";
+                cout << "r = " << r[i] << endl;
+                exit(1);
+            }
         }
     }
 }
@@ -935,7 +979,7 @@ approximate_values()
             double vec_t_yz[4];
             double mat_ee[4][4];
             double mat_ee_inv[4][4];
-            double vec_ts_q[4];
+            double vec_q_ts[4];
             double vec_vg[4];
 
             m4x4_init_mat(mat_b_g123,
@@ -958,6 +1002,19 @@ approximate_values()
                    + vec_d[2] * (u[tmpl2] * p0_normal_x[i] + v[tmpl2] * p0_normal_y[i] + w[tmpl2] * p0_normal_z[i])
                    + vec_d[3] * (u[tmpl3] * p0_normal_x[i] + v[tmpl3] * p0_normal_y[i] + w[tmpl3] * p0_normal_z[i]))
                   / (vec_d[0]);
+
+            if (isnan(q))
+            {
+                cout << "Error : Q is not a number." << endl;
+                cout << "normal : " << p0_normal_x[i] << ", " << p0_normal_y[i] << ", " << p0_normal_z[i] << endl;
+                cout << "tmpl1 velocity : " << u[tmpl1] << ", " << v[tmpl1] << ", " << w[tmpl1] << endl;
+                cout << "tmpl2 velocity : " << u[tmpl2] << ", " << v[tmpl2] << ", " << w[tmpl2] << endl;
+                cout << "tmpl3 velocity : " << u[tmpl3] << ", " << v[tmpl3] << ", " << w[tmpl3] << endl;
+                cout << "vec_d :" << endl;
+                m4x4_print_vec(vec_d);
+                cout << "Q = " << q << endl;
+                exit(1);
+            }
 
             // Явное вычисление t_xy, t_xz, t_yz.
             m4x4_mul_vec_mat(vec_1xyz, mat_b_inv, vec_base);
@@ -988,7 +1045,7 @@ approximate_values()
                               -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
                               0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
                               0.0, 0.0, 0.0, 1.0);
-                m4x4_init_vec(vec_ts_q,
+                m4x4_init_vec(vec_q_ts,
                               q, t_xy, t_yz, 1.0);
             }
             else
@@ -998,7 +1055,7 @@ approximate_values()
                               -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
                               -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
                               0.0, 0.0, 0.0, 1.0);
-                m4x4_init_vec(vec_ts_q,
+                m4x4_init_vec(vec_q_ts,
                               q, t_xy, t_xz, 1.0);
             }
             if (!m4x4_invert(mat_ee, mat_ee_inv))
@@ -1007,7 +1064,20 @@ approximate_values()
                 m4x4_print(mat_ee);
                 exit(1);
             }
-            m4x4_mul_mat_vec(mat_ee_inv, vec_ts_q, vec_vg);
+            m4x4_mul_mat_vec(mat_ee_inv, vec_q_ts, vec_vg);
+
+            if (isnan(vec_vg[0]) || isnan(vec_vg[1]) || isnan(vec_vg[2]))
+            {
+                cout << "Error : not a number in one or more components of velocity vector." << endl;
+                cout << "mat_ee_inv : " << endl;
+                m4x4_print(mat_ee_inv);
+                cout << "vec_ts_q :" << endl;
+                m4x4_print_vec(vec_q_ts);
+                cout << "vec_vg :" << endl;
+                m4x4_print_vec(vec_vg);
+                exit(1);
+            }
+
             u[i] = vec_vg[0];
             v[i] = vec_vg[1];
             w[i] = vec_vg[2];
