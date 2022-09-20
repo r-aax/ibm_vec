@@ -155,7 +155,7 @@ calc_area_init()
         {
             r[i] = 1.0;
             u[i] = 0.75;
-            v[i] = 0.5;
+            v[i] = 0.0;
             w[i] = 0.0;
             p[i] = 1.0;
         }
@@ -899,7 +899,12 @@ approximate_values()
                           1.0, x1, y1, z1,
                           1.0, x2, y2, z2,
                           1.0, x3, y3, z3);
-            m4x4_invert(mat_b, mat_b_inv);
+            if (!m4x4_invert(mat_b, mat_b_inv))
+            {
+                cout << "Error : can not invert matrix B<0'123>." << endl;
+                m4x4_print(mat_b);
+                exit(1);
+            }
             m4x4_init_vec(vec_phi,
                           0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
             m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
@@ -938,7 +943,12 @@ approximate_values()
                           1.0, x1, y1, z1,
                           1.0, x2, y2, z2,
                           1.0, x3, y3, z3);
-            m4x4_invert(mat_b_g123, mat_b_g123_inv);
+            if (!m4x4_invert(mat_b_g123, mat_b_g123_inv))
+            {
+                cout << "Error : can not invert matrix B<G123>." << endl;
+                m4x4_print(mat_b_g123);
+                exit(1);
+            }
             m4x4_init_vec(vec_1x0y0z0,
                           1.0, p0_x[i], p0_y[i], p0_z[i]);
             m4x4_mul_vec_mat(vec_1x0y0z0, mat_b_g123_inv, vec_d);
@@ -969,14 +979,34 @@ approximate_values()
             t_xy = m4x4_scalar_product(vec_base, vec_t_xy);
             t_xz = m4x4_scalar_product(vec_base, vec_t_xz);
             t_yz = m4x4_scalar_product(vec_base, vec_t_yz);
-            m4x4_init_mat(mat_ee,
-                          0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
-                          -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
-                          -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
-                          p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 1.0);
-            m4x4_invert(mat_ee, mat_ee_inv);
-            m4x4_init_vec(vec_ts_q,
-                          t_yz, t_xz, t_xy, q);
+
+            if ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
+                && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i])))
+            {
+                m4x4_init_mat(mat_ee,
+                              p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
+                              -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
+                              0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
+                              0.0, 0.0, 0.0, 1.0);
+                m4x4_init_vec(vec_ts_q,
+                              q, t_xy, t_yz, 1.0);
+            }
+            else
+            {
+                m4x4_init_mat(mat_ee,
+                              p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
+                              -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
+                              -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
+                              0.0, 0.0, 0.0, 1.0);
+                m4x4_init_vec(vec_ts_q,
+                              q, t_xy, t_xz, 1.0);
+            }
+            if (!m4x4_invert(mat_ee, mat_ee_inv))
+            {
+                cout << "Error : can not invert matrix EE." << endl;
+                m4x4_print(mat_ee);
+                exit(1);
+            }
             m4x4_mul_mat_vec(mat_ee_inv, vec_ts_q, vec_vg);
             u[i] = vec_vg[0];
             v[i] = vec_vg[1];
