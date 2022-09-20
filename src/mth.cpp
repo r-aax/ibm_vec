@@ -157,19 +157,38 @@ m4x4_scalar_product(double (&a)[4],
     return r;
 }
 
+// Умножение вектор-строки на матрицу.
+void
+m4x4_mul_vec_mat(double (&v)[4],
+                 double (&m)[4][4],
+                 double (&r)[4])
+{
+    for (int j = 0; j < 4; j++)
+    {
+        double f = 0.0;
+
+        for (int k = 0; k < 4; k++)
+        {
+            f += v[k] * m[k][j];
+        }
+
+        r[j] = f;
+    }
+}
+
 // Умножение матрицы на вектор-столбец.
 void
-m4x4_mul_on_vec(double (&m)[4][4],
-                double (&v)[4],
-                double (&r)[4])
+m4x4_mul_mat_vec(double (&m)[4][4],
+                 double (&v)[4],
+                 double (&r)[4])
 {
     for (int i = 0; i < 4; i++)
     {
         double f = 0.0;
 
-        for (int j = 0; j < 4; j++)
+        for (int k = 0; k < 4; k++)
         {
-            f += m[i][j] * v[j];
+            f += m[i][k] * v[k];
         }
 
         r[i] = f;

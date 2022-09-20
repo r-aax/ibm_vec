@@ -151,7 +151,7 @@ calc_area_init()
     {
         int i = LIN(ix, iy, iz);
 
-        if ((ix < left_cell_count) && (iy < left_cell_count))
+        if (ix < left_cell_count)
         {
             r[i] = 1.0;
             u[i] = 0.75;
@@ -171,10 +171,10 @@ calc_area_init()
 
     // Инициализация сфер.
     sphere_init_xy(0,  2.0, 2.0, 1.05);
-    sphere_init_xy(1,  4.0, 4.0, 0.75);
-    sphere_init_xy(2,  5.0, 1.0, 0.75);
-    sphere_init_xy(3,  7.0, 2.5, 1.15);
-    sphere_init_xy(4, 10.0, 0.0, 1.05);
+    // sphere_init_xy(1,  4.0, 4.0, 0.75);
+    // sphere_init_xy(2,  5.0, 1.0, 0.75);
+    // sphere_init_xy(3,  7.0, 2.5, 1.15);
+    // sphere_init_xy(4, 10.0, 0.0, 1.05);
 }
 
 // Определение типов ячеек.
@@ -902,15 +902,85 @@ approximate_values()
             m4x4_invert(mat_b, mat_b_inv);
             m4x4_init_vec(vec_phi,
                           0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
-            m4x4_mul_on_vec(mat_b_inv, vec_phi, vec_a);
+            m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
             r[i] = m4x4_scalar_product(vec_a, vec_1xyz);
 
             // Аппроксимация давления.
             // Матрица B та же, надо только поменять phi.
             m4x4_init_vec(vec_phi,
                           0.0, p[tmpl1], p[tmpl2], p[tmpl3]);
-            m4x4_mul_on_vec(mat_b_inv, vec_phi, vec_a);
+            m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
             p[i] = m4x4_scalar_product(vec_a, vec_1xyz);
+
+            //
+            // Аппроксимация скорости.
+            //
+
+            double mat_b_g123[4][4];
+            double mat_b_g123_inv[4][4];
+            double vec_1x0y0z0[4];
+            double vec_d[4];
+            double q;
+            double t_xy;
+            double t_xz;
+            double t_yz;
+            double vec_base[4];
+            double vec_t_xy[4];
+            double vec_t_xz[4];
+            double vec_t_yz[4];
+            double mat_ee[4][4];
+            double mat_ee_inv[4][4];
+            double vec_ts_q[4];
+            double vec_vg[4];
+
+            m4x4_init_mat(mat_b_g123,
+                          1.0, CCORD(ix), CCORD(iy), CCORD(iz),
+                          1.0, x1, y1, z1,
+                          1.0, x2, y2, z2,
+                          1.0, x3, y3, z3);
+            m4x4_invert(mat_b_g123, mat_b_g123_inv);
+            m4x4_init_vec(vec_1x0y0z0,
+                          1.0, p0_x[i], p0_y[i], p0_z[i]);
+            m4x4_mul_vec_mat(vec_1x0y0z0, mat_b_g123_inv, vec_d);
+
+            // Явное вычисление q.
+            q = - (vec_d[1] * (u[tmpl1] * p0_normal_x[i] + v[tmpl1] * p0_normal_y[i] + w[tmpl1] * p0_normal_z[i])
+                   + vec_d[2] * (u[tmpl2] * p0_normal_x[i] + v[tmpl2] * p0_normal_y[i] + w[tmpl2] * p0_normal_z[i])
+                   + vec_d[3] * (u[tmpl3] * p0_normal_x[i] + v[tmpl3] * p0_normal_y[i] + w[tmpl3] * p0_normal_z[i]))
+                  / (vec_d[0]);
+
+            // Явное вычисление t_xy, t_xz, t_yz.
+            m4x4_mul_vec_mat(vec_1xyz, mat_b_inv, vec_base);
+            m4x4_init_vec(vec_t_xy,
+                          0.0,
+                          -u[tmpl1] * p0_normal_y[i] + v[tmpl1] * p0_normal_x[i],
+                          -u[tmpl2] * p0_normal_y[i] + v[tmpl2] * p0_normal_x[i],
+                          -u[tmpl3] * p0_normal_y[i] + v[tmpl3] * p0_normal_x[i]);
+            m4x4_init_vec(vec_t_xz,
+                          0.0,
+                          -u[tmpl1] * p0_normal_z[i] + w[tmpl1] * p0_normal_x[i],
+                          -u[tmpl2] * p0_normal_z[i] + w[tmpl2] * p0_normal_x[i],
+                          -u[tmpl3] * p0_normal_z[i] + w[tmpl3] * p0_normal_x[i]);
+            m4x4_init_vec(vec_t_yz,
+                          0.0,
+                          -v[tmpl1] * p0_normal_z[i] + w[tmpl1] * p0_normal_y[i],
+                          -v[tmpl2] * p0_normal_z[i] + w[tmpl2] * p0_normal_y[i],
+                          -v[tmpl3] * p0_normal_z[i] + w[tmpl3] * p0_normal_y[i]);
+            t_xy = m4x4_scalar_product(vec_base, vec_t_xy);
+            t_xz = m4x4_scalar_product(vec_base, vec_t_xz);
+            t_yz = m4x4_scalar_product(vec_base, vec_t_yz);
+            m4x4_init_mat(mat_ee,
+                          0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
+                          -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
+                          -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
+                          p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 1.0);
+            m4x4_invert(mat_ee, mat_ee_inv);
+            m4x4_init_vec(vec_ts_q,
+                          t_yz, t_xz, t_xy, q);
+            m4x4_mul_mat_vec(mat_ee_inv, vec_ts_q, vec_vg);
+            u[i] = vec_vg[0];
+            v[i] = vec_vg[1];
+            w[i] = vec_vg[2];
         }
     }
 }

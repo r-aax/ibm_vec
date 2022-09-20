@@ -73,11 +73,17 @@ double
 m4x4_scalar_product(double (&a)[4],
                     double (&b)[4]);
 
+// Умножение вектор-строки на матрицу.
+void
+m4x4_mul_vec_mat(double (&v)[4],
+                 double (&m)[4][4],
+                 double (&r)[4]);
+
 // Умножение матрицы на вектор-столбец.
 void
-m4x4_mul_on_vec(double (&m)[4][4],
-                double (&v)[4],
-                double (&r)[4]);
+m4x4_mul_mat_vec(double (&m)[4][4],
+                 double (&v)[4],
+                 double (&r)[4]);
 
 // Перемножение матриц 4*4.
 void
