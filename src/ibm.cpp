@@ -151,11 +151,11 @@ calc_area_init()
     {
         int i = LIN(ix, iy, iz);
 
-        if (ix < left_cell_count)
+        if ((ix < left_cell_count) && (iy < left_cell_count))
         {
             r[i] = 1.0;
             u[i] = 0.75;
-            v[i] = 0.0;
+            v[i] = 0.5;
             w[i] = 0.0;
             p[i] = 1.0;
         }
@@ -171,10 +171,10 @@ calc_area_init()
 
     // Инициализация сфер.
     sphere_init_xy(0,  2.0, 2.0, 1.05);
-    // sphere_init_xy(1,  4.0, 4.0, 0.75);
-    // sphere_init_xy(2,  5.0, 1.0, 0.75);
-    // sphere_init_xy(3,  7.0, 2.5, 1.15);
-    // sphere_init_xy(4, 10.0, 0.0, 1.05);
+    sphere_init_xy(1,  4.0, 4.0, 0.75);
+    sphere_init_xy(2,  5.0, 1.0, 0.75);
+    sphere_init_xy(3,  7.0, 2.5, 1.15);
+    sphere_init_xy(4, 10.0, 0.0, 1.05);
 }
 
 // Определение типов ячеек.
