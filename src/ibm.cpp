@@ -748,6 +748,12 @@ calc_flows()
     {
         int i = LIN(ix, iy, iz);
 
+        // Вычисления производятся только для COMMON ячеек.
+        if (kind[i] != KIND_COMMON)
+        {
+            continue;
+        }
+
         //
         // Направление X.
         //
@@ -838,7 +844,6 @@ main()
     define_templates();
     calc_area_paraview_export(0);
 
-    /*
     for (int i = 0; i < TIME_STEPS; i++)
     {
         cout << ".... step " << i << " of " << TIME_STEPS << endl;
@@ -846,5 +851,4 @@ main()
         step();
         calc_area_paraview_export(i + 1);
     }
-    */
 }
