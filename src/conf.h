@@ -22,4 +22,7 @@
 // Количество шаров для обтекания.
 #define SPHERES_COUNT 5
 
+// Дискретность экспорта.
+#define EXPORT_DISCRETION 1
+
 #endif

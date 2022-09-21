@@ -449,6 +449,7 @@ find_templates_points(int ix,
     int lxs[3];
     int lys[3];
     int lzs[3];
+    bool is_template_found = false;
 
     for (int lx = ix - 1; lx <= ix + 1; lx++)
     {
@@ -491,14 +492,46 @@ find_templates_points(int ix,
                             }
                             else
                             {
-                                // Точки не на одной прямой, можно заканчивать.
-                                return;
+                                // Проверка, лежат ли векторы, направленные из фиктивной точки
+                                // в точки шаблонов, компланарными.
+                                int ax = lxs[0] - ix;
+                                int ay = lys[0] - iy;
+                                int az = lzs[0] - iz;
+                                int bx = lxs[1] - ix;
+                                int by = lys[1] - iy;
+                                int bz = lzs[1] - iz;
+                                int cx = lxs[2] - ix;
+                                int cy = lys[2] - iy;
+                                int cz = lzs[2] - iz;
+                                int det = ax * (by * cz - bz * cy)
+                                          - ay * (bx * cz - bz * cx)
+                                          + az * (bx * cy - by * cx);
+
+                                if (det == 0)
+                                {
+                                    // Векторы компланарны.
+                                    continue;
+                                }
+                                else
+                                {
+                                    // Точки не на одной прямой, можно заканчивать.
+                                    is_template_found = true;
+
+                                    goto find_templates_points_end;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+find_templates_points_end:
+    if (!is_template_found)
+    {
+        cout << "Error : find_templates_points : template is not found." << endl;
+        exit(1);
     }
 }
 
@@ -954,12 +987,27 @@ approximate_values()
             m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
             r[i] = m4x4_scalar_product(vec_a, vec_1xyz);
 
+            if (isnan(r[i]) || (r[i] <= 0.0))
+            {
+                cout << "Error : approximate_values : wrong value of r." << endl;
+                cout << "r = " << r[i] << endl;
+                exit(0);
+            }
+
             // Аппроксимация давления.
             // Матрица B та же, надо только поменять phi.
             m4x4_init_vec(vec_phi,
                           0.0, p[tmpl1], p[tmpl2], p[tmpl3]);
             m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
             p[i] = m4x4_scalar_product(vec_a, vec_1xyz);
+
+            if (isnan(p[i]) || (p[i] <= 0.0))
+            {
+                cout << "Error : approximate_values : wrong value of p." << endl;
+                cout << "p = " << p[i] << endl;
+                cout << "tmpl ps : " << p[tmpl1] << ", " << p[tmpl2] << ", " << p[tmpl3] << endl;
+                exit(0);
+            }
 
             //
             // Аппроксимация скорости.
@@ -1107,9 +1155,16 @@ main()
 
     for (int i = 0; i < TIME_STEPS; i++)
     {
-        cout << ".... step " << i << " of " << TIME_STEPS << endl;
+        if ((i + 1) % EXPORT_DISCRETION == 0)
+        {
+            cout << ".... step " << (i + 1) << " of " << TIME_STEPS << endl;
+        }
 
         step();
-        calc_area_paraview_export(i + 1);
+
+        if ((i + 1) % EXPORT_DISCRETION == 0)
+        {
+            calc_area_paraview_export(i + 1);
+        }
     }
 }
