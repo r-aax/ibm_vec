@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "mth.h"
+#include "conf.h"
 
 using namespace std;
 
@@ -332,15 +333,12 @@ bool
 m4x4_invert(double (&a)[4][4],
             double (&b)[4][4])
 {
-
-#define DEBUG_PRINT 0
-
     double t[4][4];
 
     m4x4_copy(a, t);
     m4x4_init_E(b);
 
-#if DEBUG_PRINT == 1
+#if MTH_DEBUG_PRINT == 1
     cout << "INI" << endl;
     m4x4_print_duplex(t, b);
 #endif
@@ -353,7 +351,7 @@ m4x4_invert(double (&a)[4][4],
         m4x4_swap_lines(t, si, lead_i);
         m4x4_swap_lines(b, si, lead_i);
 
-#if DEBUG_PRINT == 1
+#if MTH_DEBUG_PRINT == 1
         cout << "SWP: " << si << ", " << lead_i << endl;
         m4x4_print_duplex(t, b);
 #endif
@@ -375,7 +373,7 @@ m4x4_invert(double (&a)[4][4],
                 m4x4_add_to_1_line_2k(t, ti, si, k);
                 m4x4_add_to_1_line_2k(b, ti, si, k);
 
-#if DEBUG_PRINT == 1
+#if MTH_DEBUG_PRINT == 1
                 cout << "FMA: to " << ti << " add " << si << " mul " << k << endl;
                 m4x4_print_duplex(t, b);
 #endif
@@ -387,7 +385,7 @@ m4x4_invert(double (&a)[4][4],
         m4x4_div_line(t, si, tsisi);
         m4x4_div_line(b, si, tsisi);
 
-#if DEBUG_PRINT == 1
+#if MTH_DEBUG_PRINT == 1
         cout << "DIV: " << si << " on " << tsisi << endl;
         m4x4_print_duplex(t, b);
 #endif
@@ -395,7 +393,4 @@ m4x4_invert(double (&a)[4][4],
     }
 
     return true;
-
-#undef DEBUG_PRINT
-
 }

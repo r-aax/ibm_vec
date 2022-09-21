@@ -113,10 +113,11 @@ int export_count;
 //   1 - граничная ячейка.
 //   2 - фиктивная ячейка.
 //   3 - внутренняя ячейка, которая не принимает участие в расчетах.
-#define KIND_COMMON 0
-#define KIND_BORDER 1
-#define KIND_GHOST 2
-#define KIND_INNER 3
+#define KIND_NO     0
+#define KIND_COMMON 1
+#define KIND_BORDER 2
+#define KIND_GHOST  3
+#define KIND_INNER  4
 int kind[CELLS_COUNT];
 
 // Данные сфер для обтекания.
@@ -405,10 +406,14 @@ calc_nearest_sphere_points_and_normals()
 
             if (dist_to_center > sr)
             {
+
+#if IBM_DEBUG_PRINT == 1
                 // Точка снаружи сферы.
                 // Это странно, если фиктивная ячейка находится внутри сферы.
                 cout << "Internal error : ghost cell is outside sphere." << endl;
                 exit(1);
+#endif
+
             }
             else
             {
@@ -436,6 +441,20 @@ calc_nearest_sphere_points_and_normals()
             p0_normal_z[i] = 0.0;
         }
     }
+}
+
+// Расширенное получение типа.
+int
+ext_kind(int ix,
+         int iy,
+         int iz)
+{
+    if ((ix < 0) || (ix >= NX) || (iy < 0) || (iy >= NY) || (iz < 0) || (iz >= NZ))
+    {
+        return KIND_NO;
+    }
+
+    return kind[LIN(ix, iy, iz)];
 }
 
 // Поиск шаблона.
@@ -548,10 +567,25 @@ find_templates_points(int ix,
         }
     }
 
+#if IBM_DEBUG_PRINT == 1
     // Если все перебрали и не нашли шаблов, то выходим с ошибкой.
     cout << "Error : find_templates_points : template is not found." << endl;
     cout << "ix = " << ix << ", iy = " << iy << ", iz = " << iz << endl;
+    cout << "Neighborhood:" << endl;
+    cout << ext_kind(ix - 1, iy + 1, iz - 1) << " " << ext_kind(ix, iy + 1, iz - 1) << " " << ext_kind(ix + 1, iy + 1, iz - 1) << endl;
+    cout << ext_kind(ix - 1, iy, iz - 1) << " " << ext_kind(ix, iy, iz - 1) << " " << ext_kind(ix + 1, iy, iz - 1) << endl;
+    cout << ext_kind(ix - 1, iy - 1, iz - 1) << " " << ext_kind(ix, iy - 1, iz - 1) << " " << ext_kind(ix + 1, iy - 1, iz - 1) << endl;
+    cout << "------------------" << endl;
+    cout << "       " << ext_kind(ix - 1, iy + 1, iz) << " " << ext_kind(ix, iy + 1, iz) << " " << ext_kind(ix + 1, iy + 1, iz) << endl;
+    cout << "       " << ext_kind(ix - 1, iy, iz) << " " << ext_kind(ix, iy, iz) << " " << ext_kind(ix + 1, iy, iz) << endl;
+    cout << "       " << ext_kind(ix - 1, iy - 1, iz) << " " << ext_kind(ix, iy - 1, iz) << " " << ext_kind(ix + 1, iy - 1, iz) << endl;
+    cout << "------------------" << endl;
+    cout << "              " << ext_kind(ix - 1, iy + 1, iz + 1) << " " << ext_kind(ix, iy + 1, iz + 1) << " " << ext_kind(ix + 1, iy + 1, iz + 1) << endl;
+    cout << "              " << ext_kind(ix - 1, iy, iz + 1) << " " << ext_kind(ix, iy, iz + 1) << " " << ext_kind(ix + 1, iy, iz + 1) << endl;
+    cout << "              " << ext_kind(ix - 1, iy - 1, iz + 1) << " " << ext_kind(ix, iy - 1, iz + 1) << " " << ext_kind(ix + 1, iy - 1, iz + 1) << endl;
     exit(1);
+#endif
+
 }
 
 // Определение расчетных шаблонов.
@@ -692,6 +726,7 @@ u_to_d()
             // p = (E - rho * V^2/2) * (GAMMA - 1.0)
             p[i] = (E[i] - 0.5 * r[i] * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i])) * (GAMMA - 1.0);
 
+#if IBM_DEBUG_PRINT == 1
             // Плотность, давление и энергия это положительные величины.
             if ((r[i] <= 0.0) || (p[i] <= 0.0) || (E[i] <= 0.0))
             {
@@ -706,6 +741,8 @@ u_to_d()
                 cout << "r / ru / rv / rw / E = " << r[i] << " / " << ru[i] << " / " << rv[i] << " / " << rw[i] << " / " << E[i] << endl;
                 cout << "r / u / v / w / p = " << r[i] << " / " << u[i] << " / " << v[i] << " / " << w[i] << " / " << p[i] << endl;
                 exit(1);
+#endif
+
             }
         }
     }
@@ -745,12 +782,15 @@ calc_f()
             fn_rw[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + w[i] * ln5);
             fn_E[i] = k * ((H - u[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + u[i] * a) * ln5);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(fp_r[i]) || isnan(fn_r[i]))
             {
                 cout << "Error : calc_f : fp_r / fn_r is not a number." << endl;
                 cout << "fp_r / fn_r = " << fp_r[i] << ", " << fn_r[i] << endl;
                 exit(1);
             }
+#endif
+
         }
     }
 }
@@ -789,12 +829,15 @@ calc_g()
             gn_rw[i] = k * (w[i] * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + w[i] * ln5);
             gn_E[i] = k * ((H - v[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + v[i] * a) * ln5);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(gp_r[i]) || isnan(gn_r[i]))
             {
                 cout << "Error : calc_g : gp_r / gn_r is not a number." << endl;
                 cout << "gp_r / gn_r = " << gp_r[i] << ", " << gn_r[i] << endl;
                 exit(1);
             }
+#endif
+
         }
     }
 }
@@ -833,12 +876,15 @@ calc_h()
             hn_rw[i] = k * ((w[i] - a) * ln1 + 2.0 * (GAMMA - 1.0) * w[i] * ln2 + (w[i] + a) * ln5);
             hn_E[i] = k * ((H - w[i] * a) * ln1 + (GAMMA - 1.0) * V2 * ln2 + (H + w[i] * a) * ln5);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(hp_r[i]) || isnan(hn_r[i]))
             {
                 cout << "Error : calc_h : hp_r / hn_r is not a number." << endl;
                 cout << "hp_r / hn_r = " << hp_r[i] << ", " << hn_r[i] << endl;
                 exit(1);
             }
+#endif
+
         }
     }
 }
@@ -934,12 +980,15 @@ calc_flows()
             rw[i] -= (DT / DH) * (hp_rw[i] + hn_rw[ri] - hp_rw[li] - hn_rw[i]);
             E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(r[i]))
             {
                 cout << "Error : calc_flows : density is not a number.";
                 cout << "r = " << r[i] << endl;
                 exit(1);
             }
+#endif
+
         }
     }
 }
@@ -989,37 +1038,52 @@ approximate_values()
             m4x4_init_vec(vec_1xyz,
                           1.0, CCORD(ix), CCORD(iy), CCORD(iz));
 
+            //
             // Аппроксимация плотности.
+            //
+
             m4x4_init_mat(mat_b,
                           0.0, p0_normal_x[i], p0_normal_y[i], p0_normal_z[i],
                           1.0, x1, y1, z1,
                           1.0, x2, y2, z2,
                           1.0, x3, y3, z3);
+
             if (!m4x4_invert(mat_b, mat_b_inv))
             {
+
+#if IBM_DEBUG_PRINT == 1
                 cout << "Error : can not invert matrix B<0'123>." << endl;
                 m4x4_print(mat_b);
                 exit(1);
+#endif
+
             }
+
             m4x4_init_vec(vec_phi,
                           0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
             m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
             r[i] = m4x4_scalar_product(vec_a, vec_1xyz);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(r[i]) || (r[i] <= 0.0))
             {
                 cout << "Error : approximate_values : wrong value of r." << endl;
                 cout << "r = " << r[i] << endl;
                 exit(0);
             }
+#endif
 
+            //
             // Аппроксимация давления.
             // Матрица B та же, надо только поменять phi.
+            //
+
             m4x4_init_vec(vec_phi,
                           0.0, p[tmpl1], p[tmpl2], p[tmpl3]);
             m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
             p[i] = m4x4_scalar_product(vec_a, vec_1xyz);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(p[i]) || (p[i] <= 0.0))
             {
                 cout << "Error : approximate_values : wrong value of p." << endl;
@@ -1027,6 +1091,7 @@ approximate_values()
                 cout << "tmpl ps : " << p[tmpl1] << ", " << p[tmpl2] << ", " << p[tmpl3] << endl;
                 exit(0);
             }
+#endif
 
             //
             // Аппроксимация скорости.
@@ -1054,12 +1119,18 @@ approximate_values()
                           1.0, x1, y1, z1,
                           1.0, x2, y2, z2,
                           1.0, x3, y3, z3);
+
             if (!m4x4_invert(mat_b_g123, mat_b_g123_inv))
             {
+
+#if IBM_DEBUG_PRINT == 1
                 cout << "Error : can not invert matrix B<G123>." << endl;
                 m4x4_print(mat_b_g123);
                 exit(1);
+#endif
+
             }
+
             m4x4_init_vec(vec_1x0y0z0,
                           1.0, p0_x[i], p0_y[i], p0_z[i]);
             m4x4_mul_vec_mat(vec_1x0y0z0, mat_b_g123_inv, vec_d);
@@ -1070,6 +1141,7 @@ approximate_values()
                    + vec_d[3] * (u[tmpl3] * p0_normal_x[i] + v[tmpl3] * p0_normal_y[i] + w[tmpl3] * p0_normal_z[i]))
                   / (vec_d[0]);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(q))
             {
                 cout << "Error : Q is not a number." << endl;
@@ -1082,6 +1154,7 @@ approximate_values()
                 cout << "Q = " << q << endl;
                 exit(1);
             }
+#endif
 
             // Явное вычисление t_xy, t_xz, t_yz.
             m4x4_mul_vec_mat(vec_1xyz, mat_b_inv, vec_base);
@@ -1125,14 +1198,21 @@ approximate_values()
                 m4x4_init_vec(vec_q_ts,
                               q, t_xy, t_xz, 1.0);
             }
+
             if (!m4x4_invert(mat_ee, mat_ee_inv))
             {
+
+#if IBM_DEBUG_PRINT == 1
                 cout << "Error : can not invert matrix EE." << endl;
                 m4x4_print(mat_ee);
                 exit(1);
+#endif
+
             }
+
             m4x4_mul_mat_vec(mat_ee_inv, vec_q_ts, vec_vg);
 
+#if IBM_DEBUG_PRINT == 1
             if (isnan(vec_vg[0]) || isnan(vec_vg[1]) || isnan(vec_vg[2]))
             {
                 cout << "Error : not a number in one or more components of velocity vector." << endl;
@@ -1144,6 +1224,7 @@ approximate_values()
                 m4x4_print_vec(vec_vg);
                 exit(1);
             }
+#endif
 
             u[i] = vec_vg[0];
             v[i] = vec_vg[1];

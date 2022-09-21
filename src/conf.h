@@ -25,4 +25,8 @@
 // Дискретность экспорта.
 #define EXPORT_DISCRETION 1
 
+// Опции отладки.
+#define MTH_DEBUG_PRINT 0
+#define IBM_DEBUG_PRINT 1
+
 #endif
