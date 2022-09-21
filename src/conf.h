@@ -23,7 +23,7 @@
 #define SPHERES_COUNT 5
 
 // Дискретность экспорта.
-#define EXPORT_DISCRETION 1
+#define EXPORT_DISCRETION 500
 
 // Опции отладки.
 #define MTH_DEBUG_PRINT 0

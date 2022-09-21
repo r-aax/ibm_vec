@@ -103,6 +103,15 @@ int t1[CELLS_COUNT];
 int t2[CELLS_COUNT];
 int t3[CELLS_COUNT];
 
+// Матрицы.
+double mat_0p123[CELLS_COUNT][4][4];
+double mat_g123[CELLS_COUNT][4][4];
+double mat_ee[CELLS_COUNT][4][4];
+double vec_1xyz[CELLS_COUNT][4];
+double vec_1x0y0z0[CELLS_COUNT][4];
+double vec_d[CELLS_COUNT][4];
+double vec_base[CELLS_COUNT][4];
+
 // Данные для экспорта.
 int export_ids[CELLS_COUNT];
 int export_count;
@@ -741,9 +750,9 @@ u_to_d()
                 cout << "r / ru / rv / rw / E = " << r[i] << " / " << ru[i] << " / " << rv[i] << " / " << rw[i] << " / " << E[i] << endl;
                 cout << "r / u / v / w / p = " << r[i] << " / " << u[i] << " / " << v[i] << " / " << w[i] << " / " << p[i] << endl;
                 exit(1);
+            }
 #endif
 
-            }
         }
     }
 }
@@ -1029,31 +1038,28 @@ approximate_values()
             double x3 = CCORD(tmpl3x);
             double y3 = CCORD(tmpl3y);
             double z3 = CCORD(tmpl3z);
-            double mat_b[4][4];
-            double mat_b_inv[4][4];
             double vec_phi[4];
             double vec_a[4];
-            double vec_1xyz[4];
 
-            m4x4_init_vec(vec_1xyz,
+            m4x4_init_vec(vec_1xyz[i],
                           1.0, CCORD(ix), CCORD(iy), CCORD(iz));
 
             //
             // Аппроксимация плотности.
             //
 
-            m4x4_init_mat(mat_b,
+            m4x4_init_mat(mat_0p123[i],
                           0.0, p0_normal_x[i], p0_normal_y[i], p0_normal_z[i],
                           1.0, x1, y1, z1,
                           1.0, x2, y2, z2,
                           1.0, x3, y3, z3);
 
-            if (!m4x4_invert(mat_b, mat_b_inv))
+            if (!m4x4_invert(mat_0p123[i], mat_0p123[i]))
             {
 
 #if IBM_DEBUG_PRINT == 1
                 cout << "Error : can not invert matrix B<0'123>." << endl;
-                m4x4_print(mat_b);
+                m4x4_print(mat_0p123[i]);
                 exit(1);
 #endif
 
@@ -1061,8 +1067,8 @@ approximate_values()
 
             m4x4_init_vec(vec_phi,
                           0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
-            m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
-            r[i] = m4x4_scalar_product(vec_a, vec_1xyz);
+            m4x4_mul_mat_vec(mat_0p123[i], vec_phi, vec_a);
+            r[i] = m4x4_scalar_product(vec_a, vec_1xyz[i]);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(r[i]) || (r[i] <= 0.0))
@@ -1080,8 +1086,8 @@ approximate_values()
 
             m4x4_init_vec(vec_phi,
                           0.0, p[tmpl1], p[tmpl2], p[tmpl3]);
-            m4x4_mul_mat_vec(mat_b_inv, vec_phi, vec_a);
-            p[i] = m4x4_scalar_product(vec_a, vec_1xyz);
+            m4x4_mul_mat_vec(mat_0p123[i], vec_phi, vec_a);
+            p[i] = m4x4_scalar_product(vec_a, vec_1xyz[i]);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(p[i]) || (p[i] <= 0.0))
@@ -1097,49 +1103,42 @@ approximate_values()
             // Аппроксимация скорости.
             //
 
-            double mat_b_g123[4][4];
-            double mat_b_g123_inv[4][4];
-            double vec_1x0y0z0[4];
-            double vec_d[4];
             double q;
             double t_xy;
             double t_xz;
             double t_yz;
-            double vec_base[4];
             double vec_t_xy[4];
             double vec_t_xz[4];
             double vec_t_yz[4];
-            double mat_ee[4][4];
-            double mat_ee_inv[4][4];
             double vec_q_ts[4];
             double vec_vg[4];
 
-            m4x4_init_mat(mat_b_g123,
+            m4x4_init_mat(mat_g123[i],
                           1.0, CCORD(ix), CCORD(iy), CCORD(iz),
                           1.0, x1, y1, z1,
                           1.0, x2, y2, z2,
                           1.0, x3, y3, z3);
 
-            if (!m4x4_invert(mat_b_g123, mat_b_g123_inv))
+            if (!m4x4_invert(mat_g123[i], mat_g123[i]))
             {
 
 #if IBM_DEBUG_PRINT == 1
                 cout << "Error : can not invert matrix B<G123>." << endl;
-                m4x4_print(mat_b_g123);
+                m4x4_print(mat_g123[i]);
                 exit(1);
 #endif
 
             }
 
-            m4x4_init_vec(vec_1x0y0z0,
+            m4x4_init_vec(vec_1x0y0z0[i],
                           1.0, p0_x[i], p0_y[i], p0_z[i]);
-            m4x4_mul_vec_mat(vec_1x0y0z0, mat_b_g123_inv, vec_d);
+            m4x4_mul_vec_mat(vec_1x0y0z0[i], mat_g123[i], vec_d[i]);
 
             // Явное вычисление q.
-            q = - (vec_d[1] * (u[tmpl1] * p0_normal_x[i] + v[tmpl1] * p0_normal_y[i] + w[tmpl1] * p0_normal_z[i])
-                   + vec_d[2] * (u[tmpl2] * p0_normal_x[i] + v[tmpl2] * p0_normal_y[i] + w[tmpl2] * p0_normal_z[i])
-                   + vec_d[3] * (u[tmpl3] * p0_normal_x[i] + v[tmpl3] * p0_normal_y[i] + w[tmpl3] * p0_normal_z[i]))
-                  / (vec_d[0]);
+            q = - (vec_d[i][1] * (u[tmpl1] * p0_normal_x[i] + v[tmpl1] * p0_normal_y[i] + w[tmpl1] * p0_normal_z[i])
+                   + vec_d[i][2] * (u[tmpl2] * p0_normal_x[i] + v[tmpl2] * p0_normal_y[i] + w[tmpl2] * p0_normal_z[i])
+                   + vec_d[i][3] * (u[tmpl3] * p0_normal_x[i] + v[tmpl3] * p0_normal_y[i] + w[tmpl3] * p0_normal_z[i]))
+                  / (vec_d[i][0]);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(q))
@@ -1150,14 +1149,14 @@ approximate_values()
                 cout << "tmpl2 velocity : " << u[tmpl2] << ", " << v[tmpl2] << ", " << w[tmpl2] << endl;
                 cout << "tmpl3 velocity : " << u[tmpl3] << ", " << v[tmpl3] << ", " << w[tmpl3] << endl;
                 cout << "vec_d :" << endl;
-                m4x4_print_vec(vec_d);
+                m4x4_print_vec(vec_d[i]);
                 cout << "Q = " << q << endl;
                 exit(1);
             }
 #endif
 
             // Явное вычисление t_xy, t_xz, t_yz.
-            m4x4_mul_vec_mat(vec_1xyz, mat_b_inv, vec_base);
+            m4x4_mul_vec_mat(vec_1xyz[i], mat_0p123[i], vec_base[i]);
             m4x4_init_vec(vec_t_xy,
                           0.0,
                           -u[tmpl1] * p0_normal_y[i] + v[tmpl1] * p0_normal_x[i],
@@ -1173,14 +1172,14 @@ approximate_values()
                           -v[tmpl1] * p0_normal_z[i] + w[tmpl1] * p0_normal_y[i],
                           -v[tmpl2] * p0_normal_z[i] + w[tmpl2] * p0_normal_y[i],
                           -v[tmpl3] * p0_normal_z[i] + w[tmpl3] * p0_normal_y[i]);
-            t_xy = m4x4_scalar_product(vec_base, vec_t_xy);
-            t_xz = m4x4_scalar_product(vec_base, vec_t_xz);
-            t_yz = m4x4_scalar_product(vec_base, vec_t_yz);
+            t_xy = m4x4_scalar_product(vec_base[i], vec_t_xy);
+            t_xz = m4x4_scalar_product(vec_base[i], vec_t_xz);
+            t_yz = m4x4_scalar_product(vec_base[i], vec_t_yz);
 
             if ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
                 && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i])))
             {
-                m4x4_init_mat(mat_ee,
+                m4x4_init_mat(mat_ee[i],
                               p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
                               -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
                               0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
@@ -1190,7 +1189,7 @@ approximate_values()
             }
             else
             {
-                m4x4_init_mat(mat_ee,
+                m4x4_init_mat(mat_ee[i],
                               p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
                               -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
                               -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
@@ -1199,25 +1198,25 @@ approximate_values()
                               q, t_xy, t_xz, 1.0);
             }
 
-            if (!m4x4_invert(mat_ee, mat_ee_inv))
+            if (!m4x4_invert(mat_ee[i], mat_ee[i]))
             {
 
 #if IBM_DEBUG_PRINT == 1
                 cout << "Error : can not invert matrix EE." << endl;
-                m4x4_print(mat_ee);
+                m4x4_print(mat_ee[i]);
                 exit(1);
 #endif
 
             }
 
-            m4x4_mul_mat_vec(mat_ee_inv, vec_q_ts, vec_vg);
+            m4x4_mul_mat_vec(mat_ee[i], vec_q_ts, vec_vg);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(vec_vg[0]) || isnan(vec_vg[1]) || isnan(vec_vg[2]))
             {
                 cout << "Error : not a number in one or more components of velocity vector." << endl;
                 cout << "mat_ee_inv : " << endl;
-                m4x4_print(mat_ee_inv);
+                m4x4_print(mat_ee[i]);
                 cout << "vec_ts_q :" << endl;
                 m4x4_print_vec(vec_q_ts);
                 cout << "vec_vg :" << endl;

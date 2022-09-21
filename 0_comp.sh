@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 cd src
 
 rm -f ../ibm
