@@ -445,79 +445,100 @@ find_templates_points(int ix,
                       int iz,
                       int *tt[])
 {
-    int i = 0;
-    int lxs[3];
-    int lys[3];
-    int lzs[3];
-    bool is_template_found = false;
+    // Выполняем полный перебор по трем точкам.
 
-    for (int lx = ix - 1; lx <= ix + 1; lx++)
+    for (int lx1 = ix - 1; lx1 <= ix + 1; lx1++)
     {
-        for (int ly = iy - 1; ly <= iy + 1; ly++)
+        for (int ly1 = iy - 1; ly1 <= iy + 1; ly1++)
         {
-            for (int lz = iz - 1; lz <= iz + 1; lz++)
+            for (int lz1 = iz - 1; lz1 <= iz + 1; lz1++)
             {
-                if ((lx >= 0) && (lx <= NX - 1)
-                    && (ly >= 0) && (ly <= NY - 1)
-                    && (lz >= 0) && (lz <= NZ - 1))
+                // Проверка выхода за границы области.
+                if ((lx1 < 0) || (lx1 >= NX) || (ly1 < 0) || (ly1 >= NY) || (lz1 < 0) || (lz1 >= NZ))
                 {
-                    int bi = LIN(lx, ly, lz);
+                    continue;
+                }
 
-                    if (kind[bi] == KIND_COMMON)
+                int bi1 = LIN(lx1, ly1, lz1);
+
+                // Проверка типа ячейки.
+                if (kind[bi1] != KIND_COMMON)
+                {
+                    continue;
+                }
+
+                for (int lx2 = ix - 1; lx2 <= ix + 1; lx2++)
+                {
+                    for (int ly2 = iy - 1; ly2 <= iy + 1; ly2++)
                     {
-                        // Добавляем точку.
-
-                        lxs[i] = lx;
-                        lys[i] = ly;
-                        lzs[i] = lz;
-                        *tt[i] = bi;
-
-                        if (i < 2)
+                        for (int lz2 = iz - 1; lz2 <= iz + 1; lz2++)
                         {
-                            // Еще не все точки добавлены, продолжаем.
-
-                            i++;
-                        }
-                        else
-                        {
-                            // Все точки добавлены,
-                            // осталось только проверить, что эти точки не лежат на одной прямой.
-
-                            if ((lxs[2] - lxs[1] == lxs[1] - lxs[0])
-                                && (lys[2] - lys[1] == lys[1] - lys[0])
-                                && (lzs[2] - lzs[1] == lzs[1] - lzs[0]))
+                            // Проверка выхода за границы области.
+                            if ((lx2 < 0) || (lx2 >= NX) || (ly2 < 0) || (ly2 >= NY) || (lz2 < 0) || (lz2 >= NZ))
                             {
-                                // Точки лежат на одной прямой, надо искать другую точку.
                                 continue;
                             }
-                            else
+
+                            int bi2 = LIN(lx2, ly2, lz2);
+
+                            // Проверка типа ячейки.
+                            if (kind[bi2] != KIND_COMMON)
                             {
-                                // Проверка, лежат ли векторы, направленные из фиктивной точки
-                                // в точки шаблонов, компланарными.
-                                int ax = lxs[0] - ix;
-                                int ay = lys[0] - iy;
-                                int az = lzs[0] - iz;
-                                int bx = lxs[1] - ix;
-                                int by = lys[1] - iy;
-                                int bz = lzs[1] - iz;
-                                int cx = lxs[2] - ix;
-                                int cy = lys[2] - iy;
-                                int cz = lzs[2] - iz;
-                                int det = ax * (by * cz - bz * cy)
-                                          - ay * (bx * cz - bz * cx)
-                                          + az * (bx * cy - by * cx);
+                                continue;
+                            }
 
-                                if (det == 0)
+                            for (int lx3 = ix - 1; lx3 <= ix + 1; lx3++)
+                            {
+                                for (int ly3 = iy - 1; ly3 <= iy + 1; ly3++)
                                 {
-                                    // Векторы компланарны.
-                                    continue;
-                                }
-                                else
-                                {
-                                    // Точки не на одной прямой, можно заканчивать.
-                                    is_template_found = true;
+                                    for (int lz3 = iz - 1; lz3 <= iz + 1; lz3++)
+                                    {
+                                        // Проверка выхода за границы области.
+                                        if ((lx3 < 0) || (lx3 >= NX) || (ly3 < 0) || (ly3 >= NY) || (lz3 < 0) || (lz3 >= NZ))
+                                        {
+                                            continue;
+                                        }
 
-                                    goto find_templates_points_end;
+                                        int bi3 = LIN(lx3, ly3, lz3);
+
+                                        // Проверка типа ячейки.
+                                        if (kind[bi3] != KIND_COMMON)
+                                        {
+                                            continue;
+                                        }
+
+                                        // Проверяем, лежат ли точки на одной прямой.
+                                        if ((lx3 - lx2 == lx2 - lx1) && (ly3 - ly2 == ly2 - ly1) && (lz3 - lz2 == lz2 - lz1))
+                                        {
+                                            continue;
+                                        }
+
+                                        // Проверяем компланарность векторов из фиктивной ячейки к ячейкам шаблонов.
+                                        int ax = lx1 - ix;
+                                        int ay = ly1 - iy;
+                                        int az = lz1 - iz;
+                                        int bx = lx2 - ix;
+                                        int by = ly2 - iy;
+                                        int bz = lz2 - iz;
+                                        int cx = lx3 - ix;
+                                        int cy = ly3 - iy;
+                                        int cz = lz3 - iz;
+                                        int det = ax * (by * cz - bz * cy)
+                                                  - ay * (bx * cz - bz * cx)
+                                                  + az * (bx * cy - by * cx);
+
+                                        if (det == 0)
+                                        {
+                                            continue;
+                                        }
+
+                                        // Все проверки выполнены, можно сохранять точки.
+                                        *tt[0] = bi1;
+                                        *tt[1] = bi2;
+                                        *tt[2] = bi3;
+
+                                        return;
+                                    }
                                 }
                             }
                         }
@@ -527,12 +548,10 @@ find_templates_points(int ix,
         }
     }
 
-find_templates_points_end:
-    if (!is_template_found)
-    {
-        cout << "Error : find_templates_points : template is not found." << endl;
-        exit(1);
-    }
+    // Если все перебрали и не нашли шаблов, то выходим с ошибкой.
+    cout << "Error : find_templates_points : template is not found." << endl;
+    cout << "ix = " << ix << ", iy = " << iy << ", iz = " << iz << endl;
+    exit(1);
 }
 
 // Определение расчетных шаблонов.
