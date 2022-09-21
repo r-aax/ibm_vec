@@ -1002,9 +1002,9 @@ calc_flows()
     }
 }
 
-// Аппроксимация значений в фиктивных ячейках.
+// Подготовка к аппроксимации значений в фиктивных ячейках.
 void
-approximate_values()
+pre_approximate_values()
 {
     LOOP3
     {
@@ -1038,15 +1038,9 @@ approximate_values()
             double x3 = CCORD(tmpl3x);
             double y3 = CCORD(tmpl3y);
             double z3 = CCORD(tmpl3z);
-            double vec_phi[4];
-            double vec_a[4];
 
             m4x4_init_vec(vec_1xyz[i],
                           1.0, CCORD(ix), CCORD(iy), CCORD(iz));
-
-            //
-            // Аппроксимация плотности.
-            //
 
             m4x4_init_mat(mat_0p123[i],
                           0.0, p0_normal_x[i], p0_normal_y[i], p0_normal_z[i],
@@ -1064,6 +1058,94 @@ approximate_values()
 #endif
 
             }
+
+            m4x4_init_mat(mat_g123[i],
+                          1.0, CCORD(ix), CCORD(iy), CCORD(iz),
+                          1.0, x1, y1, z1,
+                          1.0, x2, y2, z2,
+                          1.0, x3, y3, z3);
+
+            if (!m4x4_invert(mat_g123[i], mat_g123[i]))
+            {
+
+#if IBM_DEBUG_PRINT == 1
+                cout << "Error : can not invert matrix B<G123>." << endl;
+                m4x4_print(mat_g123[i]);
+                exit(1);
+#endif
+
+            }
+
+            m4x4_init_vec(vec_1x0y0z0[i],
+                          1.0, p0_x[i], p0_y[i], p0_z[i]);
+            m4x4_mul_vec_mat(vec_1x0y0z0[i], mat_g123[i], vec_d[i]);
+            m4x4_mul_vec_mat(vec_1xyz[i], mat_0p123[i], vec_base[i]);
+
+            if ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
+                && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i])))
+            {
+                m4x4_init_mat(mat_ee[i],
+                              p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
+                              -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
+                              0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
+                              0.0, 0.0, 0.0, 1.0);
+            }
+            else
+            {
+                m4x4_init_mat(mat_ee[i],
+                              p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
+                              -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
+                              -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
+                              0.0, 0.0, 0.0, 1.0);
+            }
+
+            if (!m4x4_invert(mat_ee[i], mat_ee[i]))
+            {
+
+#if IBM_DEBUG_PRINT == 1
+                cout << "Error : can not invert matrix EE." << endl;
+                m4x4_print(mat_ee[i]);
+                exit(1);
+#endif
+
+            }
+        }
+    }
+}
+
+// Аппроксимация значений в фиктивных ячейках.
+void
+approximate_values()
+{
+    LOOP3
+    {
+        int i = LIN(ix, iy, iz);
+
+        if (kind[i] == KIND_GHOST)
+        {
+            // Требуется выполнить следующую аппроксимацию:
+            // 1. Плотность - скалярная величина.
+            // 2. Давление - скалярная величина.
+            // 3. Скорость - векторная величина.
+
+            int tmpl1 = t1[i];
+            int tmpl2 = t2[i];
+            int tmpl3 = t3[i];
+            int tmpl1x = UNLINX(tmpl1);
+            int tmpl1y = UNLINY(tmpl1);
+            int tmpl1z = UNLINZ(tmpl1);
+            int tmpl2x = UNLINX(tmpl2);
+            int tmpl2y = UNLINY(tmpl2);
+            int tmpl2z = UNLINZ(tmpl2);
+            int tmpl3x = UNLINX(tmpl3);
+            int tmpl3y = UNLINY(tmpl3);
+            int tmpl3z = UNLINZ(tmpl3);
+            double vec_phi[4];
+            double vec_a[4];
+
+            //
+            // Аппроксимация плотности.
+            //
 
             m4x4_init_vec(vec_phi,
                           0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
@@ -1113,27 +1195,6 @@ approximate_values()
             double vec_q_ts[4];
             double vec_vg[4];
 
-            m4x4_init_mat(mat_g123[i],
-                          1.0, CCORD(ix), CCORD(iy), CCORD(iz),
-                          1.0, x1, y1, z1,
-                          1.0, x2, y2, z2,
-                          1.0, x3, y3, z3);
-
-            if (!m4x4_invert(mat_g123[i], mat_g123[i]))
-            {
-
-#if IBM_DEBUG_PRINT == 1
-                cout << "Error : can not invert matrix B<G123>." << endl;
-                m4x4_print(mat_g123[i]);
-                exit(1);
-#endif
-
-            }
-
-            m4x4_init_vec(vec_1x0y0z0[i],
-                          1.0, p0_x[i], p0_y[i], p0_z[i]);
-            m4x4_mul_vec_mat(vec_1x0y0z0[i], mat_g123[i], vec_d[i]);
-
             // Явное вычисление q.
             q = - (vec_d[i][1] * (u[tmpl1] * p0_normal_x[i] + v[tmpl1] * p0_normal_y[i] + w[tmpl1] * p0_normal_z[i])
                    + vec_d[i][2] * (u[tmpl2] * p0_normal_x[i] + v[tmpl2] * p0_normal_y[i] + w[tmpl2] * p0_normal_z[i])
@@ -1156,7 +1217,6 @@ approximate_values()
 #endif
 
             // Явное вычисление t_xy, t_xz, t_yz.
-            m4x4_mul_vec_mat(vec_1xyz[i], mat_0p123[i], vec_base[i]);
             m4x4_init_vec(vec_t_xy,
                           0.0,
                           -u[tmpl1] * p0_normal_y[i] + v[tmpl1] * p0_normal_x[i],
@@ -1179,34 +1239,13 @@ approximate_values()
             if ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
                 && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i])))
             {
-                m4x4_init_mat(mat_ee[i],
-                              p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
-                              -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
-                              0.0, -p0_normal_z[i], p0_normal_y[i], 0.0,
-                              0.0, 0.0, 0.0, 1.0);
                 m4x4_init_vec(vec_q_ts,
                               q, t_xy, t_yz, 1.0);
             }
             else
             {
-                m4x4_init_mat(mat_ee[i],
-                              p0_normal_x[i], p0_normal_y[i], p0_normal_z[i], 0.0,
-                              -p0_normal_y[i], p0_normal_x[i], 0.0, 0.0,
-                              -p0_normal_z[i], 0.0, p0_normal_x[i], 0.0,
-                              0.0, 0.0, 0.0, 1.0);
                 m4x4_init_vec(vec_q_ts,
                               q, t_xy, t_xz, 1.0);
-            }
-
-            if (!m4x4_invert(mat_ee[i], mat_ee[i]))
-            {
-
-#if IBM_DEBUG_PRINT == 1
-                cout << "Error : can not invert matrix EE." << endl;
-                m4x4_print(mat_ee[i]);
-                exit(1);
-#endif
-
             }
 
             m4x4_mul_mat_vec(mat_ee[i], vec_q_ts, vec_vg);
@@ -1250,6 +1289,7 @@ main()
     calc_area_define_cells_kinds();
     calc_nearest_sphere_points_and_normals();
     define_templates();
+    pre_approximate_values();
     calc_area_paraview_export(0);
 
     for (int i = 0; i < TIME_STEPS; i++)
