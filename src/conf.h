@@ -5,7 +5,7 @@
 
 // Размеры расчетной области.
 // Область 10 * 5.
-#define NX 100
+#define NX 104
 #define NY 50
 #define NZ 2
 
