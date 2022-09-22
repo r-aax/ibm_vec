@@ -30,5 +30,6 @@
 #define IBM_DEBUG_PRINT 0
 #define INTEL_RUN 1
 #define USE_AVX512 0
+#define NONPROB_BRANCH_LOCALIZATION 1
 
 #endif

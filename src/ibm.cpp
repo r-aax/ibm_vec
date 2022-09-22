@@ -1104,6 +1104,9 @@ calc_h()
 void
 calc_flows_x()
 {
+
+#if NONPROB_BRANCH_LOCALIZATION == 0
+
     LOOP3
     {
         int i = LIN(ix, iy, iz);
@@ -1131,6 +1134,67 @@ calc_flows_x()
             E[i] -= (DT / DH) * (fp_E[i] + fn_E[ri] - fp_E[li] - fn_E[i]);
         }
     }
+
+#else
+
+    for (int iz = 0; iz < NZ; iz++)
+    {
+	for (int iy = 0; iy < NY; iy++)
+	{
+	    int izy = iz * (NX * NY) + iy * NX;
+
+	    {
+		int i = izy;
+
+    		if (kind[i] == KIND_COMMON)
+	        {
+        	    int ri = i + 1;
+
+        	    r[i] -= (DT / DH) * (fn_r[ri] - fn_r[i]);
+        	    ru[i] -= (DT / DH) * (fn_ru[ri] - fn_ru[i]);
+        	    rv[i] -= (DT / DH) * (fn_rv[ri] - fn_rv[i]);
+        	    rw[i] -= (DT / DH) * (fn_rw[ri] - fn_rw[i]);
+        	    E[i] -= (DT / DH) * (fn_E[ri] - fn_E[i]);
+    		}
+    	    }
+
+	    for (int ix = 1; ix < NX - 1; ix++)
+	    {
+		int i = izy + ix;
+
+    		if (kind[i] == KIND_COMMON)
+	        {
+        	    int li = i - 1;
+        	    int ri = i + 1;
+
+        	    r[i] -= (DT / DH) * (fp_r[i] + fn_r[ri] - fp_r[li] - fn_r[i]);
+        	    ru[i] -= (DT / DH) * (fp_ru[i] + fn_ru[ri] - fp_ru[li] - fn_ru[i]);
+        	    rv[i] -= (DT / DH) * (fp_rv[i] + fn_rv[ri] - fp_rv[li] - fn_rv[i]);
+        	    rw[i] -= (DT / DH) * (fp_rw[i] + fn_rw[ri] - fp_rw[li] - fn_rw[i]);
+        	    E[i] -= (DT / DH) * (fp_E[i] + fn_E[ri] - fp_E[li] - fn_E[i]);
+    		}
+    	    }
+
+	    int ix = NX - 1;
+	    {
+		int i = izy + ix;
+
+    		if (kind[i] == KIND_COMMON)
+	        {
+        	    int li = i - 1;
+
+        	    r[i] -= (DT / DH) * (fp_r[i] - fp_r[li]);
+        	    ru[i] -= (DT / DH) * (fp_ru[i] - fp_ru[li]);
+        	    rv[i] -= (DT / DH) * (fp_rv[i] - fp_rv[li]);
+        	    rw[i] -= (DT / DH) * (fp_rw[i] - fp_rw[li]);
+        	    E[i] -= (DT / DH) * (fp_E[i] - fp_E[li]);
+    		}
+    	    }
+    	}
+    }
+
+#endif
+
 }
 
 // Вычисление потоков.
