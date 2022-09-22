@@ -11,10 +11,10 @@
 
 // Шаг по пространству и по времени.
 #define DH 0.1  // м
-#define DT 0.01 // с
+#define DT 0.001 // с
 
 // Количество шагов по времени.
-#define TIME_STEPS 500
+#define TIME_STEPS 5000
 
 // Показатель адиабаты.
 #define GAMMA 1.4
@@ -29,6 +29,6 @@
 #define MTH_DEBUG_PRINT 0
 #define IBM_DEBUG_PRINT 0
 #define INTEL_RUN 1
-#define USE_AVX512 0
+#define USE_AVX512 1
 
 #endif

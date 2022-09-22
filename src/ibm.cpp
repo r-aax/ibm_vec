@@ -837,6 +837,9 @@ u_to_d()
 void
 calc_f()
 {
+
+#if USE_AVX512 == 0
+
     LOOP1
     {
         if ((kind[i] == KIND_COMMON) || (kind[i] == KIND_GHOST))
@@ -878,6 +881,125 @@ calc_f()
 
         }
     }
+
+#else
+
+    __m512d z_common = _mm512_set1_pd(KIND_COMMON);
+    __m512d z_ghost = _mm512_set1_pd(KIND_GHOST);
+    __m512d z_gam = _mm512_set1_pd(GAMMA);
+    __m512d z_gam1 = _mm512_set1_pd(GAMMA - 1.0);
+    __m512d z_2gam1 = _mm512_set1_pd(2.0 * (GAMMA - 1.0));
+    __m512d z_05 = _mm512_set1_pd(0.5);
+
+    for (int i = 0; i < CELLS_COUNT; i += 8)
+    {
+	__m512d z_kind = _mm512_load_pd(&kind[i]);
+	__mmask8 m_common = _mm512_cmpeq_pd_mask(z_kind, z_common);
+	__mmask8 m_ghost = _mm512_cmpeq_pd_mask(z_kind, z_ghost);
+	__mmask8 m_kind = m_common | m_ghost;
+	
+	if (m_kind)
+	{
+	    // Загрузка данных.
+	    __m512d z_r = _mm512_load_pd(&r[i]);
+	    __m512d z_u = _mm512_load_pd(&u[i]);
+	    __m512d z_v = _mm512_load_pd(&v[i]);
+	    __m512d z_w = _mm512_load_pd(&w[i]);
+	    __m512d z_p = _mm512_load_pd(&p[i]);
+	    
+	    // Вычисление скорости звука.
+	    __m512d z_a = _mm512_div_pd(z_p, z_r);
+	    z_a = _mm512_mul_pd(z_gam, z_a);
+	    z_a = _mm512_sqrt_pd(z_a);
+	    
+	    // Собственные значения.
+	    __m512d z_l1 = _mm512_sub_pd(z_u, z_a);
+	    __m512d z_l2 = z_u;
+	    __m512d z_l5 = _mm512_add_pd(z_u, z_a);
+	    __m512d z_lp1 = _mm512_abs_pd(z_l1);
+	    __m512d z_ln1 = z_lp1;
+	    z_lp1 = _mm512_add_pd(z_l1, z_lp1);
+	    z_ln1 = _mm512_sub_pd(z_l1, z_lp1);
+	    z_lp1 = _mm512_mul_pd(z_05, z_lp1);
+	    z_ln1 = _mm512_mul_pd(z_05, z_ln1);
+	    __m512d z_lp2 = _mm512_abs_pd(z_l2);
+	    __m512d z_ln2 = z_lp2;
+	    z_lp2 = _mm512_add_pd(z_l2, z_lp2);
+	    z_ln2 = _mm512_sub_pd(z_l2, z_lp2);
+	    z_lp2 = _mm512_mul_pd(z_05, z_lp2);
+	    z_ln2 = _mm512_mul_pd(z_05, z_ln2);
+	    __m512d z_lp5 = _mm512_abs_pd(z_l5);
+	    __m512d z_ln5 = z_lp5;
+	    z_lp5 = _mm512_add_pd(z_l5, z_lp5);
+	    z_ln5 = _mm512_sub_pd(z_l5, z_lp5);
+	    z_lp5 = _mm512_mul_pd(z_05, z_lp5);
+	    z_ln5 = _mm512_mul_pd(z_05, z_ln5);
+	    
+	    // Дополнительные коэффициенты.
+	    __m512d z_k = _mm512_mul_pd(z_05, z_r);
+	    z_k = _mm512_div_pd(z_k, z_gam);
+	    __m512d z_V2 = _mm512_mul_pd(z_u, z_u);
+	    z_V2 = _mm512_fmadd_pd(z_v, z_v, z_V2);
+	    z_V2 = _mm512_fmadd_pd(z_w, z_w, z_V2);
+	    __m512d z_H = _mm512_mul_pd(z_a, z_a);
+	    z_H = _mm512_div_pd(z_H, z_gam1);
+	    z_H = _mm512_fmadd_pd(z_05, z_V2, z_H);
+	
+	    // Потоки.
+	    __m512d z_fp_r = _mm512_fmadd_pd(z_2gam1, z_lp2, z_lp1);
+	    z_fp_r = _mm512_add_pd(z_fp_r, z_lp5);
+	    __m512d z_fp_ru = _mm512_mul_pd(z_fp_r, z_u);
+	    z_fp_ru = _mm512_fnmadd_pd(z_a, z_lp1, z_fp_ru);
+	    z_fp_ru = _mm512_fmadd_pd(z_a, z_lp5, z_fp_ru);
+	    __m512d z_fp_rv = _mm512_mul_pd(z_fp_r, z_v);
+	    __m512d z_fp_rw = _mm512_mul_pd(z_fp_r, z_w);
+	    __m512d z_tmp1 = _mm512_fnmadd_pd(z_u, z_a, z_H);
+	    __m512d z_tmp2 = _mm512_fmadd_pd(z_u, z_a, z_H);
+	    __m512d z_tmp3 = _mm512_mul_pd(z_V2, z_lp2);
+	    z_tmp3 = _mm512_mul_pd(z_tmp3, z_gam1);
+	    z_tmp1 = _mm512_fmadd_pd(z_tmp1, z_lp1, z_tmp3);
+	    __m512d z_fp_E = _mm512_fmadd_pd(z_tmp2, z_lp5, z_tmp1);
+	    z_fp_r = _mm512_mul_pd(z_k, z_fp_r);
+	    z_fp_ru = _mm512_mul_pd(z_k, z_fp_ru);
+	    z_fp_rv = _mm512_mul_pd(z_k, z_fp_rv);
+	    z_fp_rw = _mm512_mul_pd(z_k, z_fp_rw);
+	    z_fp_E = _mm512_mul_pd(z_k, z_fp_E);
+	    //
+	    __m512d z_fn_r = _mm512_fmadd_pd(z_2gam1, z_ln2, z_ln1);
+	    z_fn_r = _mm512_add_pd(z_fn_r, z_ln5);
+	    __m512d z_fn_ru = _mm512_mul_pd(z_fn_r, z_u);
+	    z_fn_ru = _mm512_fnmadd_pd(z_a, z_ln1, z_fn_ru);
+	    z_fn_ru = _mm512_fmadd_pd(z_a, z_ln5, z_fn_ru);
+	    __m512d z_fn_rv = _mm512_mul_pd(z_fn_r, z_v);
+	    __m512d z_fn_rw = _mm512_mul_pd(z_fn_r, z_w);
+	    z_tmp1 = _mm512_fnmadd_pd(z_u, z_a, z_H);
+	    z_tmp2 = _mm512_fmadd_pd(z_u, z_a, z_H);
+	    z_tmp3 = _mm512_mul_pd(z_V2, z_ln2);
+	    z_tmp3 = _mm512_mul_pd(z_tmp3, z_gam1);
+	    z_tmp1 = _mm512_fmadd_pd(z_tmp1, z_ln1, z_tmp3);
+	    __m512d z_fn_E = _mm512_fmadd_pd(z_tmp2, z_ln5, z_tmp1);
+	    z_fn_r = _mm512_mul_pd(z_k, z_fn_r);
+	    z_fn_ru = _mm512_mul_pd(z_k, z_fn_ru);
+	    z_fn_rv = _mm512_mul_pd(z_k, z_fn_rv);
+	    z_fn_rw = _mm512_mul_pd(z_k, z_fn_rw);
+	    z_fn_E = _mm512_mul_pd(z_k, z_fn_E);
+	    
+	    // Сохранение.
+	    _mm512_store_pd(&fp_r[i], z_fp_r);
+	    _mm512_store_pd(&fp_ru[i], z_fp_ru);
+	    _mm512_store_pd(&fp_rv[i], z_fp_rv);
+	    _mm512_store_pd(&fp_rw[i], z_fp_rw);
+	    _mm512_store_pd(&fp_E[i], z_fp_E);
+	    _mm512_store_pd(&fn_r[i], z_fn_r);
+	    _mm512_store_pd(&fn_ru[i], z_fn_ru);
+	    _mm512_store_pd(&fn_rv[i], z_fn_rv);
+	    _mm512_store_pd(&fn_rw[i], z_fn_rw);
+	    _mm512_store_pd(&fn_E[i], z_fn_E);
+	}
+    }
+
+#endif
+
 }
 
 // Вычисление g pos/neg.
