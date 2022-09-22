@@ -1299,6 +1299,9 @@ calc_flows_y()
 void
 calc_flows_z()
 {
+
+#if NONPROB_BRANCH_LOCALIZATION == 0
+
     LOOP3
     {
         int i = LIN(ix, iy, iz);
@@ -1326,6 +1329,71 @@ calc_flows_z()
             E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
         }
     }
+
+#else
+
+    {
+	for (int iy = 0; iy < NY; iy++)
+	{
+	    for (int i = iy * NX; i < iy * NX + NX; i++)
+	    {
+    		if (kind[i] == KIND_COMMON)
+    		{
+        	    int ri = i + NX * NY;
+
+	            r[i] -= (DT / DH) * (hn_r[ri] - hn_r[i]);
+    		    ru[i] -= (DT / DH) * (hn_ru[ri] - hn_ru[i]);
+	            rv[i] -= (DT / DH) * (hn_rv[ri] - hn_rv[i]);
+	            rw[i] -= (DT / DH) * (hn_rw[ri] - hn_rw[i]);
+    		    E[i] -= (DT / DH) * (hn_E[ri] - hn_E[i]);
+    		}
+    	    }
+        }
+    }
+
+    for (int iz = 0; iz < NZ; iz++)
+    {
+	for (int iy = 0; iy < NY; iy++)
+	{
+	    for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i++)
+	    {
+    		if (kind[i] == KIND_COMMON)
+    		{
+        	    int li = i - NX * NY;
+        	    int ri = i + NX * NY;
+
+	            r[i] -= (DT / DH) * (hp_r[i] + hn_r[ri] - hp_r[li] - hn_r[i]);
+    		    ru[i] -= (DT / DH) * (hp_ru[i] + hn_ru[ri] - hp_ru[li] - hn_ru[i]);
+	            rv[i] -= (DT / DH) * (hp_rv[i] + hn_rv[ri] - hp_rv[li] - hn_rv[i]);
+	            rw[i] -= (DT / DH) * (hp_rw[i] + hn_rw[ri] - hp_rw[li] - hn_rw[i]);
+    		    E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
+    		}
+    	    }
+        }
+    }
+
+    int iz = NZ - 1;
+    {
+	for (int iy = 0; iy < NY; iy++)
+	{
+	    for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i++)
+	    {
+    		if (kind[i] == KIND_COMMON)
+    		{
+        	    int li = i - NX * NY;
+
+	            r[i] -= (DT / DH) * (hp_r[i] - hp_r[li]);
+    		    ru[i] -= (DT / DH) * (hp_ru[i] - hp_ru[li]);
+	            rv[i] -= (DT / DH) * (hp_rv[i] - hp_rv[li]);
+	            rw[i] -= (DT / DH) * (hp_rw[i] - hp_rw[li]);
+    		    E[i] -= (DT / DH) * (hp_E[i] - hp_E[li]);
+    		}
+    	    }
+        }
+    }
+
+#endif
+
 }
 
 // Подготовка к аппроксимации значений в фиктивных ячейках.
