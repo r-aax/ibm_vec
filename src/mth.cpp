@@ -16,28 +16,28 @@
 using namespace std;
 
 // Расстояние до точки.
-float
-dist_to_point(float x,
-              float y,
-              float z,
-              float cx,
-              float cy,
-              float cz)
+double
+dist_to_point(double x,
+              double y,
+              double z,
+              double cx,
+              double cy,
+              double cz)
 {
     return sqrt(MTH_DIST2(x, y, z, cx, cy, cz));
 }
 
 // Расстояние до сферы.
-float
-dist_to_sphere(float x,
-               float y,
-               float z,
-               float sx,
-               float sy,
-               float sz,
-               float r)
+double
+dist_to_sphere(double x,
+               double y,
+               double z,
+               double sx,
+               double sy,
+               double sz,
+               double r)
 {
-    float d = MTH_DIST2(x, y, z, sx, sy, sz);
+    double d = MTH_DIST2(x, y, z, sx, sy, sz);
 
     d = sqrt(d);
 
@@ -46,7 +46,7 @@ dist_to_sphere(float x,
 
 // Печать вектора длины 4.
 void
-m4x4_print_vec(float (&v)[4])
+m4x4_print_vec(double (&v)[4])
 {
     cout << "Vector 4 : " << endl;
     cout << "--------------------------------" << endl;
@@ -63,7 +63,7 @@ m4x4_print_vec(float (&v)[4])
 
 // Печать матрицы 4*4.
 void
-m4x4_print(float (&m)[4][4])
+m4x4_print(double (&m)[4][4])
 {
     cout << "Matrix 4*4 : " << endl;
     cout << "--------------------------------" << endl;
@@ -83,8 +83,8 @@ m4x4_print(float (&m)[4][4])
 
 // Печать двух матриц 4*4.
 void
-m4x4_print_duplex(float (&a)[4][4],
-                  float (&b)[4][4])
+m4x4_print_duplex(double (&a)[4][4],
+                  double (&b)[4][4])
 {
     cout << "Matrixes 4*4 duplex : " << endl;
     cout << "----------------------------------------------------" << endl;
@@ -111,11 +111,11 @@ m4x4_print_duplex(float (&a)[4][4],
 
 // Инициализация вектора.
 void
-m4x4_init_vec(float (&v)[4],
-              float v0,
-              float v1,
-              float v2,
-              float v3)
+m4x4_init_vec(double (&v)[4],
+              double v0,
+              double v1,
+              double v2,
+              double v3)
 {
     v[0] = v0;
     v[1] = v1;
@@ -125,23 +125,23 @@ m4x4_init_vec(float (&v)[4],
 
 // Инициализация матрицы.
 void
-m4x4_init_mat(float (&m)[4][4],
-              float m00,
-              float m01,
-              float m02,
-              float m03,
-              float m10,
-              float m11,
-              float m12,
-              float m13,
-              float m20,
-              float m21,
-              float m22,
-              float m23,
-              float m30,
-              float m31,
-              float m32,
-              float m33)
+m4x4_init_mat(double (&m)[4][4],
+              double m00,
+              double m01,
+              double m02,
+              double m03,
+              double m10,
+              double m11,
+              double m12,
+              double m13,
+              double m20,
+              double m21,
+              double m22,
+              double m23,
+              double m30,
+              double m31,
+              double m32,
+              double m33)
 {
     m[0][0] = m00;
     m[0][1] = m01;
@@ -162,11 +162,11 @@ m4x4_init_mat(float (&m)[4][4],
 }
 
 // Скалярное произведение векторов.
-float
-m4x4_scalar_product(float (&a)[4],
-                    float (&b)[4])
+double
+m4x4_scalar_product(double (&a)[4],
+                    double (&b)[4])
 {
-    float r = 0.0;
+    double r = 0.0;
 
     for (int i = 0; i < 4; i++)
     {
@@ -178,13 +178,13 @@ m4x4_scalar_product(float (&a)[4],
 
 // Умножение вектор-строки на матрицу.
 void
-m4x4_mul_vec_mat(float (&v)[4],
-                 float (&m)[4][4],
-                 float (&r)[4])
+m4x4_mul_vec_mat(double (&v)[4],
+                 double (&m)[4][4],
+                 double (&r)[4])
 {
     for (int j = 0; j < 4; j++)
     {
-        float f = 0.0;
+        double f = 0.0;
 
         for (int k = 0; k < 4; k++)
         {
@@ -197,13 +197,13 @@ m4x4_mul_vec_mat(float (&v)[4],
 
 // Умножение матрицы на вектор-столбец.
 void
-m4x4_mul_mat_vec(float (&m)[4][4],
-                 float (&v)[4],
-                 float (&r)[4])
+m4x4_mul_mat_vec(double (&m)[4][4],
+                 double (&v)[4],
+                 double (&r)[4])
 {
     for (int i = 0; i < 4; i++)
     {
-        float f = 0.0;
+        double f = 0.0;
 
         for (int k = 0; k < 4; k++)
         {
@@ -216,15 +216,15 @@ m4x4_mul_mat_vec(float (&m)[4][4],
 
 // Перемножение матриц 4*4.
 void
-m4x4_mul(float (&a)[4][4],
-         float (&b)[4][4],
-         float (&c)[4][4])
+m4x4_mul(double (&a)[4][4],
+         double (&b)[4][4],
+         double (&c)[4][4])
 {
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
         {
-            float f = 0.0;
+            double f = 0.0;
 
             for (int k = 0; k < 4; k++)
             {
@@ -238,7 +238,7 @@ m4x4_mul(float (&a)[4][4],
 
 // Инициализация единичной матрицы.
 void
-m4x4_init_E(float (&m)[4][4])
+m4x4_init_E(double (&m)[4][4])
 {
     for (int i = 0; i < 4; i++)
     {
@@ -251,8 +251,8 @@ m4x4_init_E(float (&m)[4][4])
 
 // Копирование матрицы.
 void
-m4x4_copy(float (&src)[4][4],
-          float (&dst)[4][4])
+m4x4_copy(double (&src)[4][4],
+          double (&dst)[4][4])
 {
     for (int i = 0; i < 4; i++)
     {
@@ -265,9 +265,9 @@ m4x4_copy(float (&src)[4][4],
 
 // Умножение строки на число.
 void
-m4x4_div_line(float (&m)[4][4],
+m4x4_div_line(double (&m)[4][4],
               int i,
-              float k)
+              double k)
 {
     for (int j = 0; j < 4; j++)
     {
@@ -277,7 +277,7 @@ m4x4_div_line(float (&m)[4][4],
 
 // Перестановка в матрице 4*4 двух строк.
 void
-m4x4_swap_lines(float (&m)[4][4],
+m4x4_swap_lines(double (&m)[4][4],
                 int i1,
                 int i2)
 {
@@ -285,7 +285,7 @@ m4x4_swap_lines(float (&m)[4][4],
     {
         for (int j = 0; j < 4; j++)
         {
-            float f = m[i1][j];
+            double f = m[i1][j];
 
             m[i1][j] = m[i2][j];
             m[i2][j] = f;
@@ -295,10 +295,10 @@ m4x4_swap_lines(float (&m)[4][4],
 
 // Прибаление к одной строки другой строки, умноженной на число.
 void
-m4x4_add_to_1_line_2k(float (&m)[4][4],
+m4x4_add_to_1_line_2k(double (&m)[4][4],
                       int i1,
                       int i2,
-                      float k)
+                      double k)
 {
     for (int j = 0; j < 4; j++)
     {
@@ -309,15 +309,15 @@ m4x4_add_to_1_line_2k(float (&m)[4][4],
 // Номер ведущей строки по данному столбцу.
 // Ищется только среди строк с номерами, не меньшими, чем j.
 int
-m4x4_lead_line(float (&m)[4][4],
+m4x4_lead_line(double (&m)[4][4],
                int j)
 {
     int lead_i = j;
-    float lead_v = abs(m[j][j]);
+    double lead_v = abs(m[j][j]);
 
     for (int i = j + 1; i < 4; i++)
     {
-        float v = abs(m[i][j]);
+        double v = abs(m[i][j]);
 
         if (v > lead_v)
         {
@@ -331,10 +331,10 @@ m4x4_lead_line(float (&m)[4][4],
 
 // Инвертирование матрицы 4*4.
 bool
-m4x4_invert(float (&a)[4][4],
-            float (&b)[4][4])
+m4x4_invert(double (&a)[4][4],
+            double (&b)[4][4])
 {
-    float t[4][4];
+    double t[4][4];
 
     m4x4_copy(a, t);
     m4x4_init_E(b);
@@ -357,7 +357,7 @@ m4x4_invert(float (&a)[4][4],
         m4x4_print_duplex(t, b);
 #endif
 
-        float tsisi = t[si][si];
+        double tsisi = t[si][si];
 
         if (abs(tsisi) < 1.0e-10)
         {
@@ -369,7 +369,7 @@ m4x4_invert(float (&a)[4][4],
         {
             if (ti != si)
             {
-                float k = -t[ti][si] / tsisi;
+                double k = -t[ti][si] / tsisi;
 
                 m4x4_add_to_1_line_2k(t, ti, si, k);
                 m4x4_add_to_1_line_2k(b, ti, si, k);

@@ -35,7 +35,7 @@ using namespace std;
 #define UNLINZ(I) ((I) / ((NX) * (NY)))
 
 // Перевод индекса в координату центра.
-#define CCORD(I) ((static_cast<float>(I) + 0.5) * DH)
+#define CCORD(I) ((static_cast<double>(I) + 0.5) * DH)
 
 // Определение циклов.
 #define LOOP1 for (int i = 0; i < CELLS_COUNT; i++)
@@ -49,59 +49,59 @@ using namespace std;
 // Сохраняющиеся данные:
 //   - плотность импульса
 //   - плотность полной энергии
-float r[CELLS_COUNT];
-float u[CELLS_COUNT];
-float v[CELLS_COUNT];
-float w[CELLS_COUNT];
-float p[CELLS_COUNT];
+double r[CELLS_COUNT];
+double u[CELLS_COUNT];
+double v[CELLS_COUNT];
+double w[CELLS_COUNT];
+double p[CELLS_COUNT];
 //
-float ru[CELLS_COUNT];
-float rv[CELLS_COUNT];
-float rw[CELLS_COUNT];
-float E[CELLS_COUNT];
+double ru[CELLS_COUNT];
+double rv[CELLS_COUNT];
+double rw[CELLS_COUNT];
+double E[CELLS_COUNT];
 //
-float fp_r[CELLS_COUNT];
-float fp_ru[CELLS_COUNT];
-float fp_rv[CELLS_COUNT];
-float fp_rw[CELLS_COUNT];
-float fp_E[CELLS_COUNT];
-float fn_r[CELLS_COUNT];
-float fn_ru[CELLS_COUNT];
-float fn_rv[CELLS_COUNT];
-float fn_rw[CELLS_COUNT];
-float fn_E[CELLS_COUNT];
+double fp_r[CELLS_COUNT];
+double fp_ru[CELLS_COUNT];
+double fp_rv[CELLS_COUNT];
+double fp_rw[CELLS_COUNT];
+double fp_E[CELLS_COUNT];
+double fn_r[CELLS_COUNT];
+double fn_ru[CELLS_COUNT];
+double fn_rv[CELLS_COUNT];
+double fn_rw[CELLS_COUNT];
+double fn_E[CELLS_COUNT];
 //
-float gp_r[CELLS_COUNT];
-float gp_ru[CELLS_COUNT];
-float gp_rv[CELLS_COUNT];
-float gp_rw[CELLS_COUNT];
-float gp_E[CELLS_COUNT];
-float gn_r[CELLS_COUNT];
-float gn_ru[CELLS_COUNT];
-float gn_rv[CELLS_COUNT];
-float gn_rw[CELLS_COUNT];
-float gn_E[CELLS_COUNT];
+double gp_r[CELLS_COUNT];
+double gp_ru[CELLS_COUNT];
+double gp_rv[CELLS_COUNT];
+double gp_rw[CELLS_COUNT];
+double gp_E[CELLS_COUNT];
+double gn_r[CELLS_COUNT];
+double gn_ru[CELLS_COUNT];
+double gn_rv[CELLS_COUNT];
+double gn_rw[CELLS_COUNT];
+double gn_E[CELLS_COUNT];
 //
-float hp_r[CELLS_COUNT];
-float hp_ru[CELLS_COUNT];
-float hp_rv[CELLS_COUNT];
-float hp_rw[CELLS_COUNT];
-float hp_E[CELLS_COUNT];
-float hn_r[CELLS_COUNT];
-float hn_ru[CELLS_COUNT];
-float hn_rv[CELLS_COUNT];
-float hn_rw[CELLS_COUNT];
-float hn_E[CELLS_COUNT];
+double hp_r[CELLS_COUNT];
+double hp_ru[CELLS_COUNT];
+double hp_rv[CELLS_COUNT];
+double hp_rw[CELLS_COUNT];
+double hp_E[CELLS_COUNT];
+double hn_r[CELLS_COUNT];
+double hn_ru[CELLS_COUNT];
+double hn_rv[CELLS_COUNT];
+double hn_rw[CELLS_COUNT];
+double hn_E[CELLS_COUNT];
 
 // Координаты ближайшей точки на обтекаемой формы.
-float p0_x[CELLS_COUNT];
-float p0_y[CELLS_COUNT];
-float p0_z[CELLS_COUNT];
+double p0_x[CELLS_COUNT];
+double p0_y[CELLS_COUNT];
+double p0_z[CELLS_COUNT];
 
 // Координаты нормали в точке поверхности.
-float p0_normal_x[CELLS_COUNT];
-float p0_normal_y[CELLS_COUNT];
-float p0_normal_z[CELLS_COUNT];
+double p0_normal_x[CELLS_COUNT];
+double p0_normal_y[CELLS_COUNT];
+double p0_normal_z[CELLS_COUNT];
 
 // Три точки для шаблона.
 int t1[CELLS_COUNT];
@@ -109,13 +109,13 @@ int t2[CELLS_COUNT];
 int t3[CELLS_COUNT];
 
 // Матрицы.
-float mat_0p123[CELLS_COUNT][4][4];
-float mat_g123[CELLS_COUNT][4][4];
-float mat_ee[CELLS_COUNT][4][4];
-float vec_1xyz[CELLS_COUNT][4];
-float vec_1x0y0z0[CELLS_COUNT][4];
-float vec_d[CELLS_COUNT][4];
-float vec_base[CELLS_COUNT][4];
+double mat_0p123[CELLS_COUNT][4][4];
+double mat_g123[CELLS_COUNT][4][4];
+double mat_ee[CELLS_COUNT][4][4];
+double vec_1xyz[CELLS_COUNT][4];
+double vec_1x0y0z0[CELLS_COUNT][4];
+double vec_d[CELLS_COUNT][4];
+double vec_base[CELLS_COUNT][4];
 
 // Данные для экспорта.
 int export_ids[CELLS_COUNT];
@@ -132,36 +132,36 @@ int export_count;
 #define KIND_BORDER 2.0
 #define KIND_GHOST  3.0
 #define KIND_INNER  4.0
-float kind[CELLS_COUNT];
+double kind[CELLS_COUNT];
 
 // Данные сфер для обтекания.
-float sph_x[SPHERES_COUNT];
-float sph_y[SPHERES_COUNT];
-float sph_z[SPHERES_COUNT];
-float sph_r[SPHERES_COUNT];
+double sph_x[SPHERES_COUNT];
+double sph_y[SPHERES_COUNT];
+double sph_z[SPHERES_COUNT];
+double sph_r[SPHERES_COUNT];
 
 // Данные о времени.
-float time_total;
-float time_calc_f;
-float time_calc_g;
-float time_calc_h;
-float time_calc_flows_x;
-float time_calc_flows_y;
-float time_calc_flows_z;
-float time_u_to_d;
-float time_d_to_u;
-float time_approximate;
+double time_total;
+double time_calc_f;
+double time_calc_g;
+double time_calc_h;
+double time_calc_flows_x;
+double time_calc_flows_y;
+double time_calc_flows_z;
+double time_u_to_d;
+double time_d_to_u;
+double time_approximate;
 //
-float time_total_start;
-float time_calc_f_start;
-float time_calc_g_start;
-float time_calc_h_start;
-float time_calc_flows_x_start;
-float time_calc_flows_y_start;
-float time_calc_flows_z_start;
-float time_u_to_d_start;
-float time_d_to_u_start;
-float time_approximate_start;
+double time_total_start;
+double time_calc_f_start;
+double time_calc_g_start;
+double time_calc_h_start;
+double time_calc_flows_x_start;
+double time_calc_flows_y_start;
+double time_calc_flows_z_start;
+double time_u_to_d_start;
+double time_d_to_u_start;
+double time_approximate_start;
 
 #if USE_AVX512 == 1
 __m512d z = _mm512_setzero_pd();
@@ -171,13 +171,13 @@ __m512d z_kind_common = _mm512_set1_pd(KIND_COMMON);
 // Инициализация сферы.
 void
 sphere_init_xy(int i,
-               float sphere_x,
-               float sphere_y,
-               float sphere_r)
+               double sphere_x,
+               double sphere_y,
+               double sphere_r)
 {
     sph_x[i] = sphere_x;
     sph_y[i] = sphere_y;
-    sph_z[i] = (static_cast<float>(NZ) / 2.0) * DH;
+    sph_z[i] = (static_cast<double>(NZ) / 2.0) * DH;
     sph_r[i] = sphere_r;
 }
 
@@ -229,22 +229,22 @@ calc_area_define_cells_kinds()
     LOOP3
     {
         int i = LIN(ix, iy, iz);
-        float xl = DH * static_cast<float>(ix);
-        float xr = DH * static_cast<float>(ix + 1);
-        float yl = DH * static_cast<float>(iy);
-        float yr = DH * static_cast<float>(iy + 1);
-        float zl = DH * static_cast<float>(iz);
-        float zr = DH * static_cast<float>(iz + 1);
+        double xl = DH * static_cast<double>(ix);
+        double xr = DH * static_cast<double>(ix + 1);
+        double yl = DH * static_cast<double>(iy);
+        double yr = DH * static_cast<double>(iy + 1);
+        double zl = DH * static_cast<double>(iz);
+        double zr = DH * static_cast<double>(iz + 1);
 
         for (int si = 0; si < SPHERES_COUNT; si++)
         {
-            float dxl2 = MTH_DIFF2(xl, sph_x[si]);
-            float dxr2 = MTH_DIFF2(xr, sph_x[si]);
-            float dyl2 = MTH_DIFF2(yl, sph_y[si]);
-            float dyr2 = MTH_DIFF2(yr, sph_y[si]);
-            float dzl2 = MTH_DIFF2(zl, sph_z[si]);
-            float dzr2 = MTH_DIFF2(zr, sph_z[si]);
-            float r2 = sph_r[si] * sph_r[si];
+            double dxl2 = MTH_DIFF2(xl, sph_x[si]);
+            double dxr2 = MTH_DIFF2(xr, sph_x[si]);
+            double dyl2 = MTH_DIFF2(yl, sph_y[si]);
+            double dyr2 = MTH_DIFF2(yr, sph_y[si]);
+            double dzl2 = MTH_DIFF2(zl, sph_z[si]);
+            double dzr2 = MTH_DIFF2(zr, sph_z[si]);
+            double r2 = sph_r[si] * sph_r[si];
             int lll_in = static_cast<int>(dxl2 + dyl2 + dzl2 <= r2);
             int llr_in = static_cast<int>(dxl2 + dyl2 + dzr2 <= r2);
             int lrl_in = static_cast<int>(dxl2 + dyr2 + dzl2 <= r2);
@@ -271,9 +271,9 @@ calc_area_define_cells_kinds()
             }
             else
             {
-                float xc = MTH_AVG(xl, xr);
-                float yc = MTH_AVG(yl, yr);
-                float zc = MTH_AVG(zl, zr);
+                double xc = MTH_AVG(xl, xr);
+                double yc = MTH_AVG(yl, yr);
+                double zc = MTH_AVG(zl, zr);
 
                 if (MTH_DIST2(xc, yc, zc, sph_x[si], sph_y[si], sph_z[si]) <= r2)
                 {
@@ -410,17 +410,17 @@ calc_nearest_sphere_points_and_normals()
 
         if (kind[i] == KIND_GHOST)
         {
-            float x = (static_cast<float>(ix) + 0.5) * DH;
-            float y = (static_cast<float>(iy) + 0.5) * DH;
-            float z = (static_cast<float>(iz) + 0.5) * DH;
-            float sx = 0.0;
-            float sy = 0.0;
-            float sz = 0.0;
-            float sr = 0.0;
-            float d = 0.0;
+            double x = (static_cast<double>(ix) + 0.5) * DH;
+            double y = (static_cast<double>(iy) + 0.5) * DH;
+            double z = (static_cast<double>(iz) + 0.5) * DH;
+            double sx = 0.0;
+            double sy = 0.0;
+            double sz = 0.0;
+            double sr = 0.0;
+            double d = 0.0;
 
             int min_si = 0;
-            float min_d = (static_cast<float>(NX + NY + NZ)) * DH; // заведомо большое расстояние
+            double min_d = (static_cast<double>(NX + NY + NZ)) * DH; // заведомо большое расстояние
 
             for (int si = 0; si < SPHERES_COUNT; si++)
             {
@@ -444,7 +444,7 @@ calc_nearest_sphere_points_and_normals()
             sr = sph_r[min_si];
             d = dist_to_sphere(x, y, z, sx, sy, sz, sr);
 
-            float dist_to_center = dist_to_point(x, y, z, sx, sy, sz);
+            double dist_to_center = dist_to_point(x, y, z, sx, sy, sz);
 
             if (dist_to_center > sr)
             {
@@ -849,19 +849,19 @@ calc_f()
     {
         if ((kind[i] == KIND_COMMON) || (kind[i] == KIND_GHOST))
         {
-            float a = sqrt(GAMMA * p[i] / r[i]);
-            float l1 = u[i] - a;
-            float l2 = u[i];
-            float l5 = u[i] + a;
-            float lp1 = 0.5 * (l1 + abs(l1));
-            float lp2 = 0.5 * (l2 + abs(l2));
-            float lp5 = 0.5 * (l5 + abs(l5));
-            float ln1 = 0.5 * (l1 - abs(l1));
-            float ln2 = 0.5 * (l2 - abs(l2));
-            float ln5 = 0.5 * (l5 - abs(l5));
-            float k = 0.5 * r[i] / GAMMA;
-            float V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
-            float H = 0.5 * V2 + a * a / (GAMMA - 1.0);
+            double a = sqrt(GAMMA * p[i] / r[i]);
+            double l1 = u[i] - a;
+            double l2 = u[i];
+            double l5 = u[i] + a;
+            double lp1 = 0.5 * (l1 + abs(l1));
+            double lp2 = 0.5 * (l2 + abs(l2));
+            double lp5 = 0.5 * (l5 + abs(l5));
+            double ln1 = 0.5 * (l1 - abs(l1));
+            double ln2 = 0.5 * (l2 - abs(l2));
+            double ln5 = 0.5 * (l5 - abs(l5));
+            double k = 0.5 * r[i] / GAMMA;
+            double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
+            double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
 
             fp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
             fp_ru[i] = k * ((u[i] - a) * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + (u[i] + a) * lp5);
@@ -1015,19 +1015,19 @@ calc_g()
     {
         if ((kind[i] == KIND_COMMON) || (kind[i] == KIND_GHOST))
         {
-            float a = sqrt(GAMMA * p[i] / r[i]);
-            float l1 = v[i] - a;
-            float l2 = v[i];
-            float l5 = v[i] + a;
-            float lp1 = 0.5 * (l1 + abs(l1));
-            float lp2 = 0.5 * (l2 + abs(l2));
-            float lp5 = 0.5 * (l5 + abs(l5));
-            float ln1 = 0.5 * (l1 - abs(l1));
-            float ln2 = 0.5 * (l2 - abs(l2));
-            float ln5 = 0.5 * (l5 - abs(l5));
-            float k = 0.5 * r[i] / GAMMA;
-            float V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
-            float H = 0.5 * V2 + a * a / (GAMMA - 1.0);
+            double a = sqrt(GAMMA * p[i] / r[i]);
+            double l1 = v[i] - a;
+            double l2 = v[i];
+            double l5 = v[i] + a;
+            double lp1 = 0.5 * (l1 + abs(l1));
+            double lp2 = 0.5 * (l2 + abs(l2));
+            double lp5 = 0.5 * (l5 + abs(l5));
+            double ln1 = 0.5 * (l1 - abs(l1));
+            double ln2 = 0.5 * (l2 - abs(l2));
+            double ln5 = 0.5 * (l5 - abs(l5));
+            double k = 0.5 * r[i] / GAMMA;
+            double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
+            double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
 
             gp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
             gp_ru[i] = k * (u[i] * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + u[i] * lp5);
@@ -1062,19 +1062,19 @@ calc_h()
     {
         if ((kind[i] == KIND_COMMON) || (kind[i] == KIND_GHOST))
         {
-            float a = sqrt(GAMMA * p[i] / r[i]);
-            float l1 = w[i] - a;
-            float l2 = w[i];
-            float l5 = w[i] + a;
-            float lp1 = 0.5 * (l1 + abs(l1));
-            float lp2 = 0.5 * (l2 + abs(l2));
-            float lp5 = 0.5 * (l5 + abs(l5));
-            float ln1 = 0.5 * (l1 - abs(l1));
-            float ln2 = 0.5 * (l2 - abs(l2));
-            float ln5 = 0.5 * (l5 - abs(l5));
-            float k = 0.5 * r[i] / GAMMA;
-            float V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
-            float H = 0.5 * V2 + a * a / (GAMMA - 1.0);
+            double a = sqrt(GAMMA * p[i] / r[i]);
+            double l1 = w[i] - a;
+            double l2 = w[i];
+            double l5 = w[i] + a;
+            double lp1 = 0.5 * (l1 + abs(l1));
+            double lp2 = 0.5 * (l2 + abs(l2));
+            double lp5 = 0.5 * (l5 + abs(l5));
+            double ln1 = 0.5 * (l1 - abs(l1));
+            double ln2 = 0.5 * (l2 - abs(l2));
+            double ln5 = 0.5 * (l5 - abs(l5));
+            double k = 0.5 * r[i] / GAMMA;
+            double V2 = u[i] * u[i] + v[i] * v[i] + w[i] * w[i];
+            double H = 0.5 * V2 + a * a / (GAMMA - 1.0);
 
             hp_r[i] = k * (lp1 + 2.0 * (GAMMA - 1.0) * lp2 + lp5);
             hp_ru[i] = k * (u[i] * lp1 + 2.0 * (GAMMA - 1.0) * u[i] * lp2 + u[i] * lp5);
@@ -1450,15 +1450,15 @@ pre_approximate_values()
             int tmpl3x = UNLINX(tmpl3);
             int tmpl3y = UNLINY(tmpl3);
             int tmpl3z = UNLINZ(tmpl3);
-            float x1 = CCORD(tmpl1x);
-            float y1 = CCORD(tmpl1y);
-            float z1 = CCORD(tmpl1z);
-            float x2 = CCORD(tmpl2x);
-            float y2 = CCORD(tmpl2y);
-            float z2 = CCORD(tmpl2z);
-            float x3 = CCORD(tmpl3x);
-            float y3 = CCORD(tmpl3y);
-            float z3 = CCORD(tmpl3z);
+            double x1 = CCORD(tmpl1x);
+            double y1 = CCORD(tmpl1y);
+            double z1 = CCORD(tmpl1z);
+            double x2 = CCORD(tmpl2x);
+            double y2 = CCORD(tmpl2y);
+            double z2 = CCORD(tmpl2z);
+            double x3 = CCORD(tmpl3x);
+            double y3 = CCORD(tmpl3y);
+            double z3 = CCORD(tmpl3z);
 
             m4x4_init_vec(vec_1xyz[i],
                           1.0, CCORD(ix), CCORD(iy), CCORD(iz));
@@ -1559,8 +1559,8 @@ approximate_values()
             int tmpl1 = t1[i];
             int tmpl2 = t2[i];
             int tmpl3 = t3[i];
-            float vec_phi[4];
-            float vec_a[4];
+            double vec_phi[4];
+            double vec_a[4];
 
             //
             // Аппроксимация плотности.
@@ -1604,15 +1604,15 @@ approximate_values()
             // Аппроксимация скорости.
             //
 
-            float q;
-            float t_xy;
-            float t_xz;
-            float t_yz;
-            float vec_t_xy[4];
-            float vec_t_xz[4];
-            float vec_t_yz[4];
-            float vec_q_ts[4];
-            float vec_vg[4];
+            double q;
+            double t_xy;
+            double t_xz;
+            double t_yz;
+            double vec_t_xy[4];
+            double vec_t_xz[4];
+            double vec_t_yz[4];
+            double vec_q_ts[4];
+            double vec_vg[4];
 
             // Явное вычисление q.
             q = - (vec_d[i][1] * (u[tmpl1] * p0_normal_x[i] + v[tmpl1] * p0_normal_y[i] + w[tmpl1] * p0_normal_z[i])
