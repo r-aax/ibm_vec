@@ -1201,6 +1201,9 @@ calc_flows_x()
 void
 calc_flows_y()
 {
+
+#if NONPROB_BRANCH_LOCALIZATION == 0
+
     LOOP3
     {
         int i = LIN(ix, iy, iz);
@@ -1228,6 +1231,68 @@ calc_flows_y()
             E[i] -= (DT / DH) * (gp_E[i] + gn_E[ri] - gp_E[li] - gn_E[i]);
         }
     }
+
+#else
+
+    for (int iz = 0; iz < NZ; iz++)
+    {
+	int iyz = iz * (NX * NY);
+	{
+	    for (int i = iyz; i < iyz + NX; i++)
+	    {
+    		if (kind[i] == KIND_COMMON)
+    		{
+        	    int ri = i + NX;
+
+        	    r[i] -= (DT / DH) * (gn_r[ri] - gn_r[i]);
+        	    ru[i] -= (DT / DH) * (gn_ru[ri] - gn_ru[i]);
+        	    rv[i] -= (DT / DH) * (gn_rv[ri] - gn_rv[i]);
+        	    rw[i] -= (DT / DH) * (gn_rw[ri] - gn_rw[i]);
+        	    E[i] -= (DT / DH) * (gn_E[ri] - gn_E[i]);
+        	}
+    	    }
+        }
+
+	for (int iy = 0; iy < NY; iy++)
+	{
+	    int izy = iz * (NX * NY) + iy * NX;
+
+	    for (int i = izy; i < izy + NX; i++)
+	    {
+    		if (kind[i] == KIND_COMMON)
+    		{
+        	    int li = i - NX;
+        	    int ri = i + NX;
+
+        	    r[i] -= (DT / DH) * (gp_r[i] + gn_r[ri] - gp_r[li] - gn_r[i]);
+        	    ru[i] -= (DT / DH) * (gp_ru[i] + gn_ru[ri] - gp_ru[li] - gn_ru[i]);
+        	    rv[i] -= (DT / DH) * (gp_rv[i] + gn_rv[ri] - gp_rv[li] - gn_rv[i]);
+        	    rw[i] -= (DT / DH) * (gp_rw[i] + gn_rw[ri] - gp_rw[li] - gn_rw[i]);
+        	    E[i] -= (DT / DH) * (gp_E[i] + gn_E[ri] - gp_E[li] - gn_E[i]);
+        	}
+    	    }
+        }
+
+	int izy = iz * (NX * NY) + (NY - 1) * NX;
+	{
+	    for (int i = iyz; i < iyz + NX; i++)
+	    {
+    		if (kind[i] == KIND_COMMON)
+    		{
+        	    int li = i - NX;
+
+        	    r[i] -= (DT / DH) * (gp_r[i] - gp_r[li]);
+        	    ru[i] -= (DT / DH) * (gp_ru[i] - gp_ru[li]);
+        	    rv[i] -= (DT / DH) * (gp_rv[i] - gp_rv[li]);
+        	    rw[i] -= (DT / DH) * (gp_rw[i] - gp_rw[li]);
+        	    E[i] -= (DT / DH) * (gp_E[i] - gp_E[li]);
+        	}
+    	    }
+        }
+    }
+
+#endif
+
 }
 
 // Вычисление потоков.
