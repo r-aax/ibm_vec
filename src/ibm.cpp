@@ -620,6 +620,7 @@ define_templates()
     }
 }
 
+#if INTEL_RUN == 0
 // Экспорт в ParaView.
 void
 calc_area_paraview_export(int i)
@@ -697,6 +698,7 @@ calc_area_paraview_export(int i)
 
     f.close();
 }
+#endif
 
 // Перевод примитивных величин в консервативные.
 void
@@ -1290,7 +1292,10 @@ main()
     calc_nearest_sphere_points_and_normals();
     define_templates();
     pre_approximate_values();
+
+#if INTEL_RUN
     calc_area_paraview_export(0);
+#endif
 
     for (int i = 0; i < TIME_STEPS; i++)
     {
@@ -1301,9 +1306,12 @@ main()
 
         step();
 
+#if INTEL_RUN == 0
         if ((i + 1) % EXPORT_DISCRETION == 0)
         {
             calc_area_paraview_export(i + 1);
         }
+#endif
+
     }
 }
