@@ -11,6 +11,10 @@
 #include "conf.h"
 #include "mth.h"
 
+#if USE_AVX512 == 1
+#include <immintrin.h>
+#endif
+
 using namespace std;
 
 // Реализация численного метода.
@@ -123,12 +127,12 @@ int export_count;
 //   1 - граничная ячейка.
 //   2 - фиктивная ячейка.
 //   3 - внутренняя ячейка, которая не принимает участие в расчетах.
-#define KIND_NO     0
-#define KIND_COMMON 1
-#define KIND_BORDER 2
-#define KIND_GHOST  3
-#define KIND_INNER  4
-int kind[CELLS_COUNT];
+#define KIND_NO     0.0
+#define KIND_COMMON 1.0
+#define KIND_BORDER 2.0
+#define KIND_GHOST  3.0
+#define KIND_INNER  4.0
+double kind[CELLS_COUNT];
 
 // Данные сфер для обтекания.
 double sph_x[SPHERES_COUNT];
@@ -151,6 +155,9 @@ double time_u_to_d_start;
 double time_d_to_u_start;
 double time_approximate_start;
 
+#if USE_AVX512 == 1
+__m512d z = _mm512_setzero_pd();
+#endif
 
 // Инициализация сферы.
 void
@@ -721,6 +728,9 @@ calc_area_paraview_export(int i)
 void
 d_to_u()
 {
+
+#if USE_AVX512 == 0
+
     LOOP1
     {
         // В потоках участвуют обычные и фиктивные ячейки.
@@ -735,6 +745,49 @@ d_to_u()
             E[i] = 0.5 * r[i] * (u[i] * u[i] + v[i] * v[i] + w[i] * w[i]) + p[i] / (GAMMA - 1.0);
         }
     }
+
+#else
+
+    __m512d z_kind_common = _mm512_set1_pd(KIND_COMMON);
+    __m512d z_kind_ghost = _mm512_set1_pd(KIND_GHOST);
+    __m512d z_05 = _mm512_set1_pd(0.5);
+    __m512d z_gam = _mm512_set1_pd(1.0 / (GAMMA - 1.0));
+
+    for (int i = 0; i < CELLS_COUNT; i += 8)
+    {
+	__m512d z_kind = _mm512_load_pd(&kind[i]);
+	__mmask8 m_kind_common = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
+	__mmask8 m_kind_ghost = _mm512_cmpeq_pd_mask(z_kind, z_kind_ghost);
+	__mmask8 m_kind = m_kind_common | m_kind_ghost;
+	
+	if (m_kind)
+	{
+	    __m512d z_r = _mm512_load_pd(&r[i]);
+	    __m512d z_u = _mm512_load_pd(&u[i]);
+	    __m512d z_v = _mm512_load_pd(&v[i]);
+	    __m512d z_w = _mm512_load_pd(&w[i]);
+	    __m512d z_p = _mm512_load_pd(&p[i]);
+	    __m512d z_ru = _mm512_mask_mul_pd(z, m_kind, z_r, z_u);
+	    __m512d z_rv = _mm512_mask_mul_pd(z, m_kind, z_r, z_v);
+	    __m512d z_rw = _mm512_mask_mul_pd(z, m_kind, z_r, z_w);
+	    __m512d z_tmp = _mm512_mul_pd(z_u, z_u);
+	
+	    z_tmp = _mm512_fmadd_pd(z_v, z_v, z_tmp);
+	    z_tmp = _mm512_fmadd_pd(z_w, z_w, z_tmp);
+	    z_tmp = _mm512_mul_pd(z_tmp, z_r);
+	    z_tmp = _mm512_mul_pd(z_tmp, z_05);
+
+	    __m512d z_E = _mm512_fmadd_pd(z_p, z_gam, z_tmp);
+	
+	    _mm512_store_pd(&ru[i], z_ru);
+	    _mm512_store_pd(&rv[i], z_rv);
+	    _mm512_store_pd(&rw[i], z_rw);
+	    _mm512_store_pd(&E[i], z_E);
+	}
+    }
+
+#endif
+
 }
 
 // Перевод консервативных величин в примитивные.

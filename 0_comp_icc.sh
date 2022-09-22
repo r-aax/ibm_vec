@@ -7,6 +7,6 @@ cd src
 rm -f ../ibm
 rm -f *.o
 
-icc *.cpp -fopenmp -g -o ../ibm
+icc -xmic-avx512 *.cpp -fopenmp -g -o ../ibm
 
 cd ..
