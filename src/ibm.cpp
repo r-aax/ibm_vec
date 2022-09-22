@@ -764,35 +764,35 @@ d_to_u()
 
     for (int i = 0; i < CELLS_COUNT; i += 8)
     {
-	__m512d z_kind = _mm512_load_pd(&kind[i]);
-	__mmask8 m_kind_common = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
-	__mmask8 m_kind_ghost = _mm512_cmpeq_pd_mask(z_kind, z_kind_ghost);
-	__mmask8 m_kind = m_kind_common | m_kind_ghost;
-	
-	if (m_kind)
-	{
-	    __m512d z_r = _mm512_load_pd(&r[i]);
-	    __m512d z_u = _mm512_load_pd(&u[i]);
-	    __m512d z_v = _mm512_load_pd(&v[i]);
-	    __m512d z_w = _mm512_load_pd(&w[i]);
-	    __m512d z_p = _mm512_load_pd(&p[i]);
-	    __m512d z_ru = _mm512_mask_mul_pd(z, m_kind, z_r, z_u);
-	    __m512d z_rv = _mm512_mask_mul_pd(z, m_kind, z_r, z_v);
-	    __m512d z_rw = _mm512_mask_mul_pd(z, m_kind, z_r, z_w);
-	    __m512d z_tmp = _mm512_mul_pd(z_u, z_u);
-	
-	    z_tmp = _mm512_fmadd_pd(z_v, z_v, z_tmp);
-	    z_tmp = _mm512_fmadd_pd(z_w, z_w, z_tmp);
-	    z_tmp = _mm512_mul_pd(z_tmp, z_r);
-	    z_tmp = _mm512_mul_pd(z_tmp, z_05);
+    __m512d z_kind = _mm512_load_pd(&kind[i]);
+    __mmask8 m_kind_common = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
+    __mmask8 m_kind_ghost = _mm512_cmpeq_pd_mask(z_kind, z_kind_ghost);
+    __mmask8 m_kind = m_kind_common | m_kind_ghost;
+    
+    if (m_kind)
+    {
+        __m512d z_r = _mm512_load_pd(&r[i]);
+        __m512d z_u = _mm512_load_pd(&u[i]);
+        __m512d z_v = _mm512_load_pd(&v[i]);
+        __m512d z_w = _mm512_load_pd(&w[i]);
+        __m512d z_p = _mm512_load_pd(&p[i]);
+        __m512d z_ru = _mm512_mask_mul_pd(z, m_kind, z_r, z_u);
+        __m512d z_rv = _mm512_mask_mul_pd(z, m_kind, z_r, z_v);
+        __m512d z_rw = _mm512_mask_mul_pd(z, m_kind, z_r, z_w);
+        __m512d z_tmp = _mm512_mul_pd(z_u, z_u);
+    
+        z_tmp = _mm512_fmadd_pd(z_v, z_v, z_tmp);
+        z_tmp = _mm512_fmadd_pd(z_w, z_w, z_tmp);
+        z_tmp = _mm512_mul_pd(z_tmp, z_r);
+        z_tmp = _mm512_mul_pd(z_tmp, z_05);
 
-	    __m512d z_E = _mm512_fmadd_pd(z_p, z_gam, z_tmp);
-	
-	    _mm512_store_pd(&ru[i], z_ru);
-	    _mm512_store_pd(&rv[i], z_rv);
-	    _mm512_store_pd(&rw[i], z_rw);
-	    _mm512_store_pd(&E[i], z_E);
-	}
+        __m512d z_E = _mm512_fmadd_pd(z_p, z_gam, z_tmp);
+    
+        _mm512_store_pd(&ru[i], z_ru);
+        _mm512_store_pd(&rv[i], z_rv);
+        _mm512_store_pd(&rw[i], z_rw);
+        _mm512_store_pd(&E[i], z_E);
+    }
     }
 
 #endif
@@ -898,109 +898,109 @@ calc_f()
 
     for (int i = 0; i < CELLS_COUNT; i += 8)
     {
-	__m512d z_kind = _mm512_load_pd(&kind[i]);
-	__mmask8 m_common = _mm512_cmpeq_pd_mask(z_kind, z_common);
-	__mmask8 m_ghost = _mm512_cmpeq_pd_mask(z_kind, z_ghost);
-	__mmask8 m_kind = m_common | m_ghost;
-	
-	if (m_kind)
-	{
-	    // Загрузка данных.
-	    __m512d z_r = _mm512_load_pd(&r[i]);
-	    __m512d z_u = _mm512_load_pd(&u[i]);
-	    __m512d z_v = _mm512_load_pd(&v[i]);
-	    __m512d z_w = _mm512_load_pd(&w[i]);
-	    __m512d z_p = _mm512_load_pd(&p[i]);
-	    
-	    // Вычисление скорости звука.
-	    __m512d z_a = _mm512_div_pd(z_p, z_r);
-	    z_a = _mm512_mul_pd(z_gam, z_a);
-	    z_a = _mm512_sqrt_pd(z_a);
-	    
-	    // Собственные значения.
-	    __m512d z_l1 = _mm512_sub_pd(z_u, z_a);
-	    __m512d z_l2 = z_u;
-	    __m512d z_l5 = _mm512_add_pd(z_u, z_a);
-	    __m512d z_lp1 = _mm512_abs_pd(z_l1);
-	    __m512d z_ln1 = z_lp1;
-	    z_lp1 = _mm512_add_pd(z_l1, z_lp1);
-	    z_ln1 = _mm512_sub_pd(z_l1, z_lp1);
-	    z_lp1 = _mm512_mul_pd(z_05, z_lp1);
-	    z_ln1 = _mm512_mul_pd(z_05, z_ln1);
-	    __m512d z_lp2 = _mm512_abs_pd(z_l2);
-	    __m512d z_ln2 = z_lp2;
-	    z_lp2 = _mm512_add_pd(z_l2, z_lp2);
-	    z_ln2 = _mm512_sub_pd(z_l2, z_lp2);
-	    z_lp2 = _mm512_mul_pd(z_05, z_lp2);
-	    z_ln2 = _mm512_mul_pd(z_05, z_ln2);
-	    __m512d z_lp5 = _mm512_abs_pd(z_l5);
-	    __m512d z_ln5 = z_lp5;
-	    z_lp5 = _mm512_add_pd(z_l5, z_lp5);
-	    z_ln5 = _mm512_sub_pd(z_l5, z_lp5);
-	    z_lp5 = _mm512_mul_pd(z_05, z_lp5);
-	    z_ln5 = _mm512_mul_pd(z_05, z_ln5);
-	    
-	    // Дополнительные коэффициенты.
-	    __m512d z_k = _mm512_mul_pd(z_05, z_r);
-	    z_k = _mm512_div_pd(z_k, z_gam);
-	    __m512d z_V2 = _mm512_mul_pd(z_u, z_u);
-	    z_V2 = _mm512_fmadd_pd(z_v, z_v, z_V2);
-	    z_V2 = _mm512_fmadd_pd(z_w, z_w, z_V2);
-	    __m512d z_H = _mm512_mul_pd(z_a, z_a);
-	    z_H = _mm512_div_pd(z_H, z_gam1);
-	    z_H = _mm512_fmadd_pd(z_05, z_V2, z_H);
-	
-	    // Потоки.
-	    __m512d z_fp_r = _mm512_fmadd_pd(z_2gam1, z_lp2, z_lp1);
-	    z_fp_r = _mm512_add_pd(z_fp_r, z_lp5);
-	    __m512d z_fp_ru = _mm512_mul_pd(z_fp_r, z_u);
-	    z_fp_ru = _mm512_fnmadd_pd(z_a, z_lp1, z_fp_ru);
-	    z_fp_ru = _mm512_fmadd_pd(z_a, z_lp5, z_fp_ru);
-	    __m512d z_fp_rv = _mm512_mul_pd(z_fp_r, z_v);
-	    __m512d z_fp_rw = _mm512_mul_pd(z_fp_r, z_w);
-	    __m512d z_tmp1 = _mm512_fnmadd_pd(z_u, z_a, z_H);
-	    __m512d z_tmp2 = _mm512_fmadd_pd(z_u, z_a, z_H);
-	    __m512d z_tmp3 = _mm512_mul_pd(z_V2, z_lp2);
-	    z_tmp3 = _mm512_mul_pd(z_tmp3, z_gam1);
-	    z_tmp1 = _mm512_fmadd_pd(z_tmp1, z_lp1, z_tmp3);
-	    __m512d z_fp_E = _mm512_fmadd_pd(z_tmp2, z_lp5, z_tmp1);
-	    z_fp_r = _mm512_mul_pd(z_k, z_fp_r);
-	    z_fp_ru = _mm512_mul_pd(z_k, z_fp_ru);
-	    z_fp_rv = _mm512_mul_pd(z_k, z_fp_rv);
-	    z_fp_rw = _mm512_mul_pd(z_k, z_fp_rw);
-	    z_fp_E = _mm512_mul_pd(z_k, z_fp_E);
-	    //
-	    __m512d z_fn_r = _mm512_fmadd_pd(z_2gam1, z_ln2, z_ln1);
-	    z_fn_r = _mm512_add_pd(z_fn_r, z_ln5);
-	    __m512d z_fn_ru = _mm512_mul_pd(z_fn_r, z_u);
-	    z_fn_ru = _mm512_fnmadd_pd(z_a, z_ln1, z_fn_ru);
-	    z_fn_ru = _mm512_fmadd_pd(z_a, z_ln5, z_fn_ru);
-	    __m512d z_fn_rv = _mm512_mul_pd(z_fn_r, z_v);
-	    __m512d z_fn_rw = _mm512_mul_pd(z_fn_r, z_w);
-	    z_tmp1 = _mm512_fnmadd_pd(z_u, z_a, z_H);
-	    z_tmp2 = _mm512_fmadd_pd(z_u, z_a, z_H);
-	    z_tmp3 = _mm512_mul_pd(z_V2, z_ln2);
-	    z_tmp3 = _mm512_mul_pd(z_tmp3, z_gam1);
-	    z_tmp1 = _mm512_fmadd_pd(z_tmp1, z_ln1, z_tmp3);
-	    __m512d z_fn_E = _mm512_fmadd_pd(z_tmp2, z_ln5, z_tmp1);
-	    z_fn_r = _mm512_mul_pd(z_k, z_fn_r);
-	    z_fn_ru = _mm512_mul_pd(z_k, z_fn_ru);
-	    z_fn_rv = _mm512_mul_pd(z_k, z_fn_rv);
-	    z_fn_rw = _mm512_mul_pd(z_k, z_fn_rw);
-	    z_fn_E = _mm512_mul_pd(z_k, z_fn_E);
-	    
-	    // Сохранение.
-	    _mm512_store_pd(&fp_r[i], z_fp_r);
-	    _mm512_store_pd(&fp_ru[i], z_fp_ru);
-	    _mm512_store_pd(&fp_rv[i], z_fp_rv);
-	    _mm512_store_pd(&fp_rw[i], z_fp_rw);
-	    _mm512_store_pd(&fp_E[i], z_fp_E);
-	    _mm512_store_pd(&fn_r[i], z_fn_r);
-	    _mm512_store_pd(&fn_ru[i], z_fn_ru);
-	    _mm512_store_pd(&fn_rv[i], z_fn_rv);
-	    _mm512_store_pd(&fn_rw[i], z_fn_rw);
-	    _mm512_store_pd(&fn_E[i], z_fn_E);
-	}
+    __m512d z_kind = _mm512_load_pd(&kind[i]);
+    __mmask8 m_common = _mm512_cmpeq_pd_mask(z_kind, z_common);
+    __mmask8 m_ghost = _mm512_cmpeq_pd_mask(z_kind, z_ghost);
+    __mmask8 m_kind = m_common | m_ghost;
+    
+    if (m_kind)
+    {
+        // Загрузка данных.
+        __m512d z_r = _mm512_load_pd(&r[i]);
+        __m512d z_u = _mm512_load_pd(&u[i]);
+        __m512d z_v = _mm512_load_pd(&v[i]);
+        __m512d z_w = _mm512_load_pd(&w[i]);
+        __m512d z_p = _mm512_load_pd(&p[i]);
+        
+        // Вычисление скорости звука.
+        __m512d z_a = _mm512_div_pd(z_p, z_r);
+        z_a = _mm512_mul_pd(z_gam, z_a);
+        z_a = _mm512_sqrt_pd(z_a);
+        
+        // Собственные значения.
+        __m512d z_l1 = _mm512_sub_pd(z_u, z_a);
+        __m512d z_l2 = z_u;
+        __m512d z_l5 = _mm512_add_pd(z_u, z_a);
+        __m512d z_lp1 = _mm512_abs_pd(z_l1);
+        __m512d z_ln1 = z_lp1;
+        z_lp1 = _mm512_add_pd(z_l1, z_lp1);
+        z_ln1 = _mm512_sub_pd(z_l1, z_lp1);
+        z_lp1 = _mm512_mul_pd(z_05, z_lp1);
+        z_ln1 = _mm512_mul_pd(z_05, z_ln1);
+        __m512d z_lp2 = _mm512_abs_pd(z_l2);
+        __m512d z_ln2 = z_lp2;
+        z_lp2 = _mm512_add_pd(z_l2, z_lp2);
+        z_ln2 = _mm512_sub_pd(z_l2, z_lp2);
+        z_lp2 = _mm512_mul_pd(z_05, z_lp2);
+        z_ln2 = _mm512_mul_pd(z_05, z_ln2);
+        __m512d z_lp5 = _mm512_abs_pd(z_l5);
+        __m512d z_ln5 = z_lp5;
+        z_lp5 = _mm512_add_pd(z_l5, z_lp5);
+        z_ln5 = _mm512_sub_pd(z_l5, z_lp5);
+        z_lp5 = _mm512_mul_pd(z_05, z_lp5);
+        z_ln5 = _mm512_mul_pd(z_05, z_ln5);
+        
+        // Дополнительные коэффициенты.
+        __m512d z_k = _mm512_mul_pd(z_05, z_r);
+        z_k = _mm512_div_pd(z_k, z_gam);
+        __m512d z_V2 = _mm512_mul_pd(z_u, z_u);
+        z_V2 = _mm512_fmadd_pd(z_v, z_v, z_V2);
+        z_V2 = _mm512_fmadd_pd(z_w, z_w, z_V2);
+        __m512d z_H = _mm512_mul_pd(z_a, z_a);
+        z_H = _mm512_div_pd(z_H, z_gam1);
+        z_H = _mm512_fmadd_pd(z_05, z_V2, z_H);
+    
+        // Потоки.
+        __m512d z_fp_r = _mm512_fmadd_pd(z_2gam1, z_lp2, z_lp1);
+        z_fp_r = _mm512_add_pd(z_fp_r, z_lp5);
+        __m512d z_fp_ru = _mm512_mul_pd(z_fp_r, z_u);
+        z_fp_ru = _mm512_fnmadd_pd(z_a, z_lp1, z_fp_ru);
+        z_fp_ru = _mm512_fmadd_pd(z_a, z_lp5, z_fp_ru);
+        __m512d z_fp_rv = _mm512_mul_pd(z_fp_r, z_v);
+        __m512d z_fp_rw = _mm512_mul_pd(z_fp_r, z_w);
+        __m512d z_tmp1 = _mm512_fnmadd_pd(z_u, z_a, z_H);
+        __m512d z_tmp2 = _mm512_fmadd_pd(z_u, z_a, z_H);
+        __m512d z_tmp3 = _mm512_mul_pd(z_V2, z_lp2);
+        z_tmp3 = _mm512_mul_pd(z_tmp3, z_gam1);
+        z_tmp1 = _mm512_fmadd_pd(z_tmp1, z_lp1, z_tmp3);
+        __m512d z_fp_E = _mm512_fmadd_pd(z_tmp2, z_lp5, z_tmp1);
+        z_fp_r = _mm512_mul_pd(z_k, z_fp_r);
+        z_fp_ru = _mm512_mul_pd(z_k, z_fp_ru);
+        z_fp_rv = _mm512_mul_pd(z_k, z_fp_rv);
+        z_fp_rw = _mm512_mul_pd(z_k, z_fp_rw);
+        z_fp_E = _mm512_mul_pd(z_k, z_fp_E);
+        //
+        __m512d z_fn_r = _mm512_fmadd_pd(z_2gam1, z_ln2, z_ln1);
+        z_fn_r = _mm512_add_pd(z_fn_r, z_ln5);
+        __m512d z_fn_ru = _mm512_mul_pd(z_fn_r, z_u);
+        z_fn_ru = _mm512_fnmadd_pd(z_a, z_ln1, z_fn_ru);
+        z_fn_ru = _mm512_fmadd_pd(z_a, z_ln5, z_fn_ru);
+        __m512d z_fn_rv = _mm512_mul_pd(z_fn_r, z_v);
+        __m512d z_fn_rw = _mm512_mul_pd(z_fn_r, z_w);
+        z_tmp1 = _mm512_fnmadd_pd(z_u, z_a, z_H);
+        z_tmp2 = _mm512_fmadd_pd(z_u, z_a, z_H);
+        z_tmp3 = _mm512_mul_pd(z_V2, z_ln2);
+        z_tmp3 = _mm512_mul_pd(z_tmp3, z_gam1);
+        z_tmp1 = _mm512_fmadd_pd(z_tmp1, z_ln1, z_tmp3);
+        __m512d z_fn_E = _mm512_fmadd_pd(z_tmp2, z_ln5, z_tmp1);
+        z_fn_r = _mm512_mul_pd(z_k, z_fn_r);
+        z_fn_ru = _mm512_mul_pd(z_k, z_fn_ru);
+        z_fn_rv = _mm512_mul_pd(z_k, z_fn_rv);
+        z_fn_rw = _mm512_mul_pd(z_k, z_fn_rw);
+        z_fn_E = _mm512_mul_pd(z_k, z_fn_E);
+        
+        // Сохранение.
+        _mm512_store_pd(&fp_r[i], z_fp_r);
+        _mm512_store_pd(&fp_ru[i], z_fp_ru);
+        _mm512_store_pd(&fp_rv[i], z_fp_rv);
+        _mm512_store_pd(&fp_rw[i], z_fp_rw);
+        _mm512_store_pd(&fp_E[i], z_fp_E);
+        _mm512_store_pd(&fn_r[i], z_fn_r);
+        _mm512_store_pd(&fn_ru[i], z_fn_ru);
+        _mm512_store_pd(&fn_rv[i], z_fn_rv);
+        _mm512_store_pd(&fn_rw[i], z_fn_rw);
+        _mm512_store_pd(&fn_E[i], z_fn_E);
+    }
     }
 
 #endif
@@ -1140,58 +1140,58 @@ calc_flows_x()
 
     for (int iz = 0; iz < NZ; iz++)
     {
-	for (int iy = 0; iy < NY; iy++)
-	{
-	    int izy = iz * (NX * NY) + iy * NX;
+    for (int iy = 0; iy < NY; iy++)
+    {
+        int izy = iz * (NX * NY) + iy * NX;
 
-	    {
-		int i = izy;
+        {
+        int i = izy;
 
-    		if (kind[i] == KIND_COMMON)
-	        {
-        	    int ri = i + 1;
+            if (kind[i] == KIND_COMMON)
+            {
+                int ri = i + 1;
 
-        	    r[i] -= (DT / DH) * (fn_r[ri] - fn_r[i]);
-        	    ru[i] -= (DT / DH) * (fn_ru[ri] - fn_ru[i]);
-        	    rv[i] -= (DT / DH) * (fn_rv[ri] - fn_rv[i]);
-        	    rw[i] -= (DT / DH) * (fn_rw[ri] - fn_rw[i]);
-        	    E[i] -= (DT / DH) * (fn_E[ri] - fn_E[i]);
-    		}
-    	    }
+                r[i] -= (DT / DH) * (fn_r[ri] - fn_r[i]);
+                ru[i] -= (DT / DH) * (fn_ru[ri] - fn_ru[i]);
+                rv[i] -= (DT / DH) * (fn_rv[ri] - fn_rv[i]);
+                rw[i] -= (DT / DH) * (fn_rw[ri] - fn_rw[i]);
+                E[i] -= (DT / DH) * (fn_E[ri] - fn_E[i]);
+            }
+            }
 
-	    for (int ix = 1; ix < NX - 1; ix++)
-	    {
-		int i = izy + ix;
+        for (int ix = 1; ix < NX - 1; ix++)
+        {
+        int i = izy + ix;
 
-    		if (kind[i] == KIND_COMMON)
-	        {
-        	    int li = i - 1;
-        	    int ri = i + 1;
+            if (kind[i] == KIND_COMMON)
+            {
+                int li = i - 1;
+                int ri = i + 1;
 
-        	    r[i] -= (DT / DH) * (fp_r[i] + fn_r[ri] - fp_r[li] - fn_r[i]);
-        	    ru[i] -= (DT / DH) * (fp_ru[i] + fn_ru[ri] - fp_ru[li] - fn_ru[i]);
-        	    rv[i] -= (DT / DH) * (fp_rv[i] + fn_rv[ri] - fp_rv[li] - fn_rv[i]);
-        	    rw[i] -= (DT / DH) * (fp_rw[i] + fn_rw[ri] - fp_rw[li] - fn_rw[i]);
-        	    E[i] -= (DT / DH) * (fp_E[i] + fn_E[ri] - fp_E[li] - fn_E[i]);
-    		}
-    	    }
+                r[i] -= (DT / DH) * (fp_r[i] + fn_r[ri] - fp_r[li] - fn_r[i]);
+                ru[i] -= (DT / DH) * (fp_ru[i] + fn_ru[ri] - fp_ru[li] - fn_ru[i]);
+                rv[i] -= (DT / DH) * (fp_rv[i] + fn_rv[ri] - fp_rv[li] - fn_rv[i]);
+                rw[i] -= (DT / DH) * (fp_rw[i] + fn_rw[ri] - fp_rw[li] - fn_rw[i]);
+                E[i] -= (DT / DH) * (fp_E[i] + fn_E[ri] - fp_E[li] - fn_E[i]);
+            }
+            }
 
-	    int ix = NX - 1;
-	    {
-		int i = izy + ix;
+        int ix = NX - 1;
+        {
+        int i = izy + ix;
 
-    		if (kind[i] == KIND_COMMON)
-	        {
-        	    int li = i - 1;
+            if (kind[i] == KIND_COMMON)
+            {
+                int li = i - 1;
 
-        	    r[i] -= (DT / DH) * (fp_r[i] - fp_r[li]);
-        	    ru[i] -= (DT / DH) * (fp_ru[i] - fp_ru[li]);
-        	    rv[i] -= (DT / DH) * (fp_rv[i] - fp_rv[li]);
-        	    rw[i] -= (DT / DH) * (fp_rw[i] - fp_rw[li]);
-        	    E[i] -= (DT / DH) * (fp_E[i] - fp_E[li]);
-    		}
-    	    }
-    	}
+                r[i] -= (DT / DH) * (fp_r[i] - fp_r[li]);
+                ru[i] -= (DT / DH) * (fp_ru[i] - fp_ru[li]);
+                rv[i] -= (DT / DH) * (fp_rv[i] - fp_rv[li]);
+                rw[i] -= (DT / DH) * (fp_rw[i] - fp_rw[li]);
+                E[i] -= (DT / DH) * (fp_E[i] - fp_E[li]);
+            }
+            }
+        }
     }
 
 #endif
@@ -1237,58 +1237,58 @@ calc_flows_y()
 
     for (int iz = 0; iz < NZ; iz++)
     {
-	int iyz = iz * (NX * NY);
-	{
-	    for (int i = iyz; i < iyz + NX; i++)
-	    {
-    		if (kind[i] == KIND_COMMON)
-    		{
-        	    int ri = i + NX;
+    int iyz = iz * (NX * NY);
+    {
+        for (int i = iyz; i < iyz + NX; i++)
+        {
+            if (kind[i] == KIND_COMMON)
+            {
+                int ri = i + NX;
 
-        	    r[i] -= (DT / DH) * (gn_r[ri] - gn_r[i]);
-        	    ru[i] -= (DT / DH) * (gn_ru[ri] - gn_ru[i]);
-        	    rv[i] -= (DT / DH) * (gn_rv[ri] - gn_rv[i]);
-        	    rw[i] -= (DT / DH) * (gn_rw[ri] - gn_rw[i]);
-        	    E[i] -= (DT / DH) * (gn_E[ri] - gn_E[i]);
-        	}
-    	    }
+                r[i] -= (DT / DH) * (gn_r[ri] - gn_r[i]);
+                ru[i] -= (DT / DH) * (gn_ru[ri] - gn_ru[i]);
+                rv[i] -= (DT / DH) * (gn_rv[ri] - gn_rv[i]);
+                rw[i] -= (DT / DH) * (gn_rw[ri] - gn_rw[i]);
+                E[i] -= (DT / DH) * (gn_E[ri] - gn_E[i]);
+            }
+            }
         }
 
-	for (int iy = 1; iy < NY - 1; iy++)
-	{
-	    int izy = iz * (NX * NY) + iy * NX;
+    for (int iy = 1; iy < NY - 1; iy++)
+    {
+        int izy = iz * (NX * NY) + iy * NX;
 
-	    for (int i = izy; i < izy + NX; i++)
-	    {
-    		if (kind[i] == KIND_COMMON)
-    		{
-        	    int li = i - NX;
-        	    int ri = i + NX;
+        for (int i = izy; i < izy + NX; i++)
+        {
+            if (kind[i] == KIND_COMMON)
+            {
+                int li = i - NX;
+                int ri = i + NX;
 
-        	    r[i] -= (DT / DH) * (gp_r[i] + gn_r[ri] - gp_r[li] - gn_r[i]);
-        	    ru[i] -= (DT / DH) * (gp_ru[i] + gn_ru[ri] - gp_ru[li] - gn_ru[i]);
-        	    rv[i] -= (DT / DH) * (gp_rv[i] + gn_rv[ri] - gp_rv[li] - gn_rv[i]);
-        	    rw[i] -= (DT / DH) * (gp_rw[i] + gn_rw[ri] - gp_rw[li] - gn_rw[i]);
-        	    E[i] -= (DT / DH) * (gp_E[i] + gn_E[ri] - gp_E[li] - gn_E[i]);
-        	}
-    	    }
+                r[i] -= (DT / DH) * (gp_r[i] + gn_r[ri] - gp_r[li] - gn_r[i]);
+                ru[i] -= (DT / DH) * (gp_ru[i] + gn_ru[ri] - gp_ru[li] - gn_ru[i]);
+                rv[i] -= (DT / DH) * (gp_rv[i] + gn_rv[ri] - gp_rv[li] - gn_rv[i]);
+                rw[i] -= (DT / DH) * (gp_rw[i] + gn_rw[ri] - gp_rw[li] - gn_rw[i]);
+                E[i] -= (DT / DH) * (gp_E[i] + gn_E[ri] - gp_E[li] - gn_E[i]);
+            }
+            }
         }
 
-	int izy = iz * (NX * NY) + (NY - 1) * NX;
-	{
-	    for (int i = iyz; i < iyz + NX; i++)
-	    {
-    		if (kind[i] == KIND_COMMON)
-    		{
-        	    int li = i - NX;
+    int izy = iz * (NX * NY) + (NY - 1) * NX;
+    {
+        for (int i = iyz; i < iyz + NX; i++)
+        {
+            if (kind[i] == KIND_COMMON)
+            {
+                int li = i - NX;
 
-        	    r[i] -= (DT / DH) * (gp_r[i] - gp_r[li]);
-        	    ru[i] -= (DT / DH) * (gp_ru[i] - gp_ru[li]);
-        	    rv[i] -= (DT / DH) * (gp_rv[i] - gp_rv[li]);
-        	    rw[i] -= (DT / DH) * (gp_rw[i] - gp_rw[li]);
-        	    E[i] -= (DT / DH) * (gp_E[i] - gp_E[li]);
-        	}
-    	    }
+                r[i] -= (DT / DH) * (gp_r[i] - gp_r[li]);
+                ru[i] -= (DT / DH) * (gp_ru[i] - gp_ru[li]);
+                rv[i] -= (DT / DH) * (gp_rv[i] - gp_rv[li]);
+                rw[i] -= (DT / DH) * (gp_rw[i] - gp_rw[li]);
+                E[i] -= (DT / DH) * (gp_E[i] - gp_E[li]);
+            }
+            }
         }
     }
 
@@ -1339,83 +1339,83 @@ calc_flows_z()
         {
 
 #if USE_AVX512 == 1
-	    __m512d z_kind = _mm512_load_pd(&kind[i]);
-	    __mmask8 m = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
+        __m512d z_kind = _mm512_load_pd(&kind[i]);
+        __mmask8 m = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
 
-	    if (m == 0x0)
-	    {
-		continue;
-	    }
+        if (m == 0x0)
+        {
+        continue;
+        }
 #endif
 
-    	    for (int l = i; l < i + 8; l++)
-    	    {
-		if (kind[l] == KIND_COMMON)
-    		{
-    		    int ri = l + NX * NY;
+            for (int l = i; l < i + 8; l++)
+            {
+        if (kind[l] == KIND_COMMON)
+            {
+                int ri = l + NX * NY;
 
-	    	    r[l] -= (DT / DH) * (hn_r[ri] - hn_r[l]);
-    		    ru[l] -= (DT / DH) * (hn_ru[ri] - hn_ru[l]);
-	    	    rv[l] -= (DT / DH) * (hn_rv[ri] - hn_rv[l]);
-	    	    rw[l] -= (DT / DH) * (hn_rw[ri] - hn_rw[l]);
-    		    E[l] -= (DT / DH) * (hn_E[ri] - hn_E[l]);
-    		}
-    	    }
-    	}
+                r[l] -= (DT / DH) * (hn_r[ri] - hn_r[l]);
+                ru[l] -= (DT / DH) * (hn_ru[ri] - hn_ru[l]);
+                rv[l] -= (DT / DH) * (hn_rv[ri] - hn_rv[l]);
+                rw[l] -= (DT / DH) * (hn_rw[ri] - hn_rw[l]);
+                E[l] -= (DT / DH) * (hn_E[ri] - hn_E[l]);
+            }
+            }
+        }
     }
 
     for (int iz = 1; iz < NZ - 1; iz++)
     {
-	for (int iy = 0; iy < NY; iy++)
-	{
-	    for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i++)
-	    {
-    		if (kind[i] == KIND_COMMON)
-    		{
-        	    int li = i - NX * NY;
-        	    int ri = i + NX * NY;
+    for (int iy = 0; iy < NY; iy++)
+    {
+        for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i++)
+        {
+            if (kind[i] == KIND_COMMON)
+            {
+                int li = i - NX * NY;
+                int ri = i + NX * NY;
 
-	            r[i] -= (DT / DH) * (hp_r[i] + hn_r[ri] - hp_r[li] - hn_r[i]);
-    		    ru[i] -= (DT / DH) * (hp_ru[i] + hn_ru[ri] - hp_ru[li] - hn_ru[i]);
-	            rv[i] -= (DT / DH) * (hp_rv[i] + hn_rv[ri] - hp_rv[li] - hn_rv[i]);
-	            rw[i] -= (DT / DH) * (hp_rw[i] + hn_rw[ri] - hp_rw[li] - hn_rw[i]);
-    		    E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
-    		}
-    	    }
+                r[i] -= (DT / DH) * (hp_r[i] + hn_r[ri] - hp_r[li] - hn_r[i]);
+                ru[i] -= (DT / DH) * (hp_ru[i] + hn_ru[ri] - hp_ru[li] - hn_ru[i]);
+                rv[i] -= (DT / DH) * (hp_rv[i] + hn_rv[ri] - hp_rv[li] - hn_rv[i]);
+                rw[i] -= (DT / DH) * (hp_rw[i] + hn_rw[ri] - hp_rw[li] - hn_rw[i]);
+                E[i] -= (DT / DH) * (hp_E[i] + hn_E[ri] - hp_E[li] - hn_E[i]);
+            }
+            }
         }
     }
 
     int iz = NZ - 1;
     {
-	for (int iy = 0; iy < NY; iy++)
-	{
-	    for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i += 8)
-	    {
+    for (int iy = 0; iy < NY; iy++)
+    {
+        for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i += 8)
+        {
 
 #if USE_AVX512 == 1
-		__m512d z_kind = _mm512_load_pd(&kind[i]);
-		__mmask8 m = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
+        __m512d z_kind = _mm512_load_pd(&kind[i]);
+        __mmask8 m = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
 
-		if (m == 0x0)
-		{
-		    continue;
-		}
+        if (m == 0x0)
+        {
+            continue;
+        }
 #endif
 
-		for (int l = i; l < i + 8; l++)
-		{
-    		    if (kind[l] == KIND_COMMON)
-    		    {
-        		int li = l - NX * NY;
+        for (int l = i; l < i + 8; l++)
+        {
+                if (kind[l] == KIND_COMMON)
+                {
+                int li = l - NX * NY;
 
-	        	r[l] -= (DT / DH) * (hp_r[l] - hp_r[li]);
-    			ru[l] -= (DT / DH) * (hp_ru[l] - hp_ru[li]);
-	        	rv[l] -= (DT / DH) * (hp_rv[l] - hp_rv[li]);
-	        	rw[l] -= (DT / DH) * (hp_rw[l] - hp_rw[li]);
-    			E[l] -= (DT / DH) * (hp_E[l] - hp_E[li]);
-    		    }
-    		}
-    	    }
+                r[l] -= (DT / DH) * (hp_r[l] - hp_r[li]);
+                ru[l] -= (DT / DH) * (hp_ru[l] - hp_ru[li]);
+                rv[l] -= (DT / DH) * (hp_rv[l] - hp_rv[li]);
+                rw[l] -= (DT / DH) * (hp_rw[l] - hp_rw[li]);
+                E[l] -= (DT / DH) * (hp_E[l] - hp_E[li]);
+                }
+            }
+            }
         }
     }
 
@@ -1534,14 +1534,21 @@ pre_approximate_values()
     }
 }
 
+#define M4X4_INIT_VEC(VEC, V0, V1, V2, V3) \
+{ (VEC)[0] = (V0); (VEC)[1] = (V1); (VEC)[2] = (V2); (VEC)[3] = (V3); }
+
+#define M4X4_SCALAR_PRODUCT(VA, VB) \
+((VA)[0] * (VB)[0] + (VA)[1] * (VB)[1] + (VA)[2] * (VB)[2] + (VA)[3] * (VB)[3])
+
+#define M4X4_MUL_MAT_VEC(M, V, R) \
+{ (R)[0] = M4X4_SCALAR_PRODUCT((M)[0], V); (R)[1] = M4X4_SCALAR_PRODUCT((M)[1], V); (R)[2] = M4X4_SCALAR_PRODUCT((M)[2], V); (R)[3] = M4X4_SCALAR_PRODUCT((M)[3], V);}
+
 // Аппроксимация значений в фиктивных ячейках.
 void
 approximate_values()
 {
-    LOOP3
+    LOOP1
     {
-        int i = LIN(ix, iy, iz);
-
         if (kind[i] == KIND_GHOST)
         {
             // Требуется выполнить следующую аппроксимацию:
@@ -1552,15 +1559,6 @@ approximate_values()
             int tmpl1 = t1[i];
             int tmpl2 = t2[i];
             int tmpl3 = t3[i];
-            int tmpl1x = UNLINX(tmpl1);
-            int tmpl1y = UNLINY(tmpl1);
-            int tmpl1z = UNLINZ(tmpl1);
-            int tmpl2x = UNLINX(tmpl2);
-            int tmpl2y = UNLINY(tmpl2);
-            int tmpl2z = UNLINZ(tmpl2);
-            int tmpl3x = UNLINX(tmpl3);
-            int tmpl3y = UNLINY(tmpl3);
-            int tmpl3z = UNLINZ(tmpl3);
             double vec_phi[4];
             double vec_a[4];
 
@@ -1568,10 +1566,10 @@ approximate_values()
             // Аппроксимация плотности.
             //
 
-            m4x4_init_vec(vec_phi,
+            M4X4_INIT_VEC(vec_phi,
                           0.0, r[tmpl1], r[tmpl2], r[tmpl3]);
-            m4x4_mul_mat_vec(mat_0p123[i], vec_phi, vec_a);
-            r[i] = m4x4_scalar_product(vec_a, vec_1xyz[i]);
+            M4X4_MUL_MAT_VEC(mat_0p123[i], vec_phi, vec_a);
+            r[i] = M4X4_SCALAR_PRODUCT(vec_a, vec_1xyz[i]);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(r[i]) || (r[i] <= 0.0))
@@ -1587,10 +1585,10 @@ approximate_values()
             // Матрица B та же, надо только поменять phi.
             //
 
-            m4x4_init_vec(vec_phi,
+            M4X4_INIT_VEC(vec_phi,
                           0.0, p[tmpl1], p[tmpl2], p[tmpl3]);
-            m4x4_mul_mat_vec(mat_0p123[i], vec_phi, vec_a);
-            p[i] = m4x4_scalar_product(vec_a, vec_1xyz[i]);
+            M4X4_MUL_MAT_VEC(mat_0p123[i], vec_phi, vec_a);
+            p[i] = M4X4_SCALAR_PRODUCT(vec_a, vec_1xyz[i]);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(p[i]) || (p[i] <= 0.0))
@@ -1638,32 +1636,31 @@ approximate_values()
 #endif
 
             // Явное вычисление t_xy, t_xz, t_yz.
-            m4x4_init_vec(vec_t_xy,
+            M4X4_INIT_VEC(vec_t_xy,
                           0.0,
                           -u[tmpl1] * p0_normal_y[i] + v[tmpl1] * p0_normal_x[i],
                           -u[tmpl2] * p0_normal_y[i] + v[tmpl2] * p0_normal_x[i],
                           -u[tmpl3] * p0_normal_y[i] + v[tmpl3] * p0_normal_x[i]);
-            m4x4_init_vec(vec_t_xz,
+            M4X4_INIT_VEC(vec_t_xz,
                           0.0,
                           -u[tmpl1] * p0_normal_z[i] + w[tmpl1] * p0_normal_x[i],
                           -u[tmpl2] * p0_normal_z[i] + w[tmpl2] * p0_normal_x[i],
                           -u[tmpl3] * p0_normal_z[i] + w[tmpl3] * p0_normal_x[i]);
-            m4x4_init_vec(vec_t_yz,
+            M4X4_INIT_VEC(vec_t_yz,
                           0.0,
                           -v[tmpl1] * p0_normal_z[i] + w[tmpl1] * p0_normal_y[i],
                           -v[tmpl2] * p0_normal_z[i] + w[tmpl2] * p0_normal_y[i],
                           -v[tmpl3] * p0_normal_z[i] + w[tmpl3] * p0_normal_y[i]);
-            t_xy = m4x4_scalar_product(vec_base[i], vec_t_xy);
-            t_xz = m4x4_scalar_product(vec_base[i], vec_t_xz);
-            t_yz = m4x4_scalar_product(vec_base[i], vec_t_yz);
 
-	    vec_q_ts[0] = q;
-	    vec_q_ts[1] = t_xy;
-	    vec_q_ts[2] = ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
-	                   && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i]))) ? t_yz : t_xz;
-	    vec_q_ts[3] = 1.0;
+        vec_q_ts[0] = q;
+        vec_q_ts[1] = M4X4_SCALAR_PRODUCT(vec_base[i], vec_t_xy);
+        vec_q_ts[2] = ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
+                       && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i])))
+                      ? M4X4_SCALAR_PRODUCT(vec_base[i], vec_t_yz)
+                      : M4X4_SCALAR_PRODUCT(vec_base[i], vec_t_xz);
+        vec_q_ts[3] = 1.0;
 
-            m4x4_mul_mat_vec(mat_ee[i], vec_q_ts, vec_vg);
+            M4X4_MUL_MAT_VEC(mat_ee[i], vec_q_ts, vec_vg);
 
 #if IBM_DEBUG_PRINT == 1
             if (isnan(vec_vg[0]) || isnan(vec_vg[1]) || isnan(vec_vg[2]))
