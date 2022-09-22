@@ -1293,7 +1293,7 @@ main()
     define_templates();
     pre_approximate_values();
 
-#if INTEL_RUN
+#if INTEL_RUN == 0
     calc_area_paraview_export(0);
 #endif
 
