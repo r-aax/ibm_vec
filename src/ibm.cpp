@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 #include <math.h>
+#include <omp.h>
 
 #include "conf.h"
 #include "mth.h"
@@ -134,6 +135,22 @@ double sph_x[SPHERES_COUNT];
 double sph_y[SPHERES_COUNT];
 double sph_z[SPHERES_COUNT];
 double sph_r[SPHERES_COUNT];
+
+// Данные о времени.
+double time_total;
+double time_calc_fgh;
+double time_calc_flows;
+double time_u_to_d;
+double time_d_to_u;
+double time_approximate;
+//
+double time_total_start;
+double time_calc_fgh_start;
+double time_calc_flows_start;
+double time_u_to_d_start;
+double time_d_to_u_start;
+double time_approximate_start;
+
 
 // Инициализация сферы.
 void
@@ -913,8 +930,6 @@ calc_fgh()
 void
 calc_flows()
 {
-    calc_fgh();
-
     LOOP3
     {
         int i = LIN(ix, iy, iz);
@@ -1277,10 +1292,25 @@ approximate_values()
 void
 step()
 {
+    time_approximate_start = omp_get_wtime();
     approximate_values();
+    time_approximate += (omp_get_wtime() - time_approximate_start);
+
+    time_d_to_u_start = omp_get_wtime();
     d_to_u();
+    time_d_to_u += (omp_get_wtime() - time_d_to_u_start);
+
+    time_calc_fgh_start = omp_get_wtime();
+    calc_fgh();
+    time_calc_fgh += (omp_get_wtime() - time_calc_fgh_start);
+
+    time_calc_flows_start = omp_get_wtime();
     calc_flows();
+    time_calc_flows += (omp_get_wtime() - time_calc_flows_start);
+
+    time_u_to_d_start = omp_get_wtime();
     u_to_d();
+    time_u_to_d += (omp_get_wtime() - time_u_to_d_start);
 }
 
 // Точка входа.
@@ -1296,6 +1326,15 @@ main()
 #if INTEL_RUN == 0
     calc_area_paraview_export(0);
 #endif
+
+    time_calc_fgh = 0.0;
+    time_calc_flows = 0.0;
+    time_u_to_d = 0.0;
+    time_d_to_u = 0.0;
+    time_approximate = 0.0;
+    time_total = 0.0;
+
+    time_total_start = omp_get_wtime();
 
     for (int i = 0; i < TIME_STEPS; i++)
     {
@@ -1314,4 +1353,14 @@ main()
 #endif
 
     }
+
+    time_total += (omp_get_wtime() - time_total_start);
+
+    cout << "Total times:" << endl;
+    cout << "  time_approximate : " << setw(10) << time_approximate << " (" << 100.0 * (time_approximate / time_total) << "%)" << endl;
+    cout << "       time_d_to_u : " << setw(10) << time_d_to_u << " (" << 100.0 * (time_d_to_u / time_total) << "%)" << endl;
+    cout << "     time_calc_fgh : " << setw(10) << time_calc_fgh << " (" << 100.0 * (time_calc_fgh / time_total) << "%)" << endl;
+    cout << "   time_calc_flows : " << setw(10) << time_calc_flows << " (" << 100.0 * (time_calc_flows / time_total) << "%)" << endl;
+    cout << "       time_u_to_d : " << setw(10) << time_u_to_d << " (" << 100.0 * (time_u_to_d / time_total) << "%)" << endl;
+    cout << "        time_total : " << setw(10) << time_total << endl;
 }

@@ -7,6 +7,6 @@ cd src
 rm -f ../ibm
 rm -f *.o
 
-icc *.cpp -g -o ../ibm
+icc *.cpp -fopenmp -g -o ../ibm
 
 cd ..

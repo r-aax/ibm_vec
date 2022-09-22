@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <math.h>
+#include <omp.h>
 
 #include "mth.h"
 #include "conf.h"
