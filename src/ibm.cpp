@@ -142,14 +142,18 @@ double sph_r[SPHERES_COUNT];
 
 // Данные о времени.
 double time_total;
-double time_calc_fgh;
+double time_calc_f;
+double time_calc_g;
+double time_calc_h;
 double time_calc_flows;
 double time_u_to_d;
 double time_d_to_u;
 double time_approximate;
 //
 double time_total_start;
-double time_calc_fgh_start;
+double time_calc_f_start;
+double time_calc_g_start;
+double time_calc_h_start;
 double time_calc_flows_start;
 double time_u_to_d_start;
 double time_d_to_u_start;
@@ -970,15 +974,6 @@ calc_h()
     }
 }
 
-// Вычисление f/g/h pos/neg.
-void
-calc_fgh()
-{
-    calc_f();
-    calc_g();
-    calc_h();
-}
-
 // Вычисление потоков.
 void
 calc_flows()
@@ -1353,9 +1348,17 @@ step()
     d_to_u();
     time_d_to_u += (omp_get_wtime() - time_d_to_u_start);
 
-    time_calc_fgh_start = omp_get_wtime();
-    calc_fgh();
-    time_calc_fgh += (omp_get_wtime() - time_calc_fgh_start);
+    time_calc_f_start = omp_get_wtime();
+    calc_f();
+    time_calc_f += (omp_get_wtime() - time_calc_f_start);
+
+    time_calc_g_start = omp_get_wtime();
+    calc_g();
+    time_calc_g += (omp_get_wtime() - time_calc_g_start);
+
+    time_calc_h_start = omp_get_wtime();
+    calc_h();
+    time_calc_h += (omp_get_wtime() - time_calc_h_start);
 
     time_calc_flows_start = omp_get_wtime();
     calc_flows();
@@ -1380,7 +1383,9 @@ main()
     calc_area_paraview_export(0);
 #endif
 
-    time_calc_fgh = 0.0;
+    time_calc_f = 0.0;
+    time_calc_g = 0.0;
+    time_calc_h = 0.0;
     time_calc_flows = 0.0;
     time_u_to_d = 0.0;
     time_d_to_u = 0.0;
@@ -1412,7 +1417,9 @@ main()
     cout << "Total times:" << endl;
     cout << "  time_approximate : " << setw(10) << time_approximate << " (" << 100.0 * (time_approximate / time_total) << "%)" << endl;
     cout << "       time_d_to_u : " << setw(10) << time_d_to_u << " (" << 100.0 * (time_d_to_u / time_total) << "%)" << endl;
-    cout << "     time_calc_fgh : " << setw(10) << time_calc_fgh << " (" << 100.0 * (time_calc_fgh / time_total) << "%)" << endl;
+    cout << "     time_calc_f   : " << setw(10) << time_calc_f << " (" << 100.0 * (time_calc_f / time_total) << "%)" << endl;
+    cout << "     time_calc_g   : " << setw(10) << time_calc_g << " (" << 100.0 * (time_calc_g / time_total) << "%)" << endl;
+    cout << "     time_calc_h   : " << setw(10) << time_calc_h << " (" << 100.0 * (time_calc_h / time_total) << "%)" << endl;
     cout << "   time_calc_flows : " << setw(10) << time_calc_flows << " (" << 100.0 * (time_calc_flows / time_total) << "%)" << endl;
     cout << "       time_u_to_d : " << setw(10) << time_u_to_d << " (" << 100.0 * (time_u_to_d / time_total) << "%)" << endl;
     cout << "        time_total : " << setw(10) << time_total << endl;
