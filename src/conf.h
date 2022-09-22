@@ -29,6 +29,6 @@
 #define MTH_DEBUG_PRINT 0
 #define IBM_DEBUG_PRINT 0
 #define INTEL_RUN 1
-#define USE_AVX512 1
+#define USE_AVX512 0
 
 #endif
