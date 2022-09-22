@@ -5,7 +5,7 @@
 
 // Размеры расчетной области.
 // Область 10 * 5.
-#define NX 104
+#define NX 112
 #define NY 50
 #define NZ 2
 
@@ -30,6 +30,6 @@
 #define IBM_DEBUG_PRINT 0
 #define INTEL_RUN 0
 #define USE_AVX512 0
-#define NONPROB_BRANCH_LOCALIZATION 1
+#define NONPROB_BRANCH_LOCALIZATION 0
 
 #endif
