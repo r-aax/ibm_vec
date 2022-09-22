@@ -1253,7 +1253,7 @@ calc_flows_y()
     	    }
         }
 
-	for (int iy = 0; iy < NY; iy++)
+	for (int iy = 1; iy < NY - 1; iy++)
 	{
 	    int izy = iz * (NX * NY) + iy * NX;
 
@@ -1332,26 +1332,24 @@ calc_flows_z()
 
 #else
 
+    for (int iy = 0; iy < NY; iy++)
     {
-	for (int iy = 0; iy < NY; iy++)
-	{
-	    for (int i = iy * NX; i < iy * NX + NX; i++)
-	    {
-    		if (kind[i] == KIND_COMMON)
-    		{
-        	    int ri = i + NX * NY;
+        for (int i = iy * NX; i < iy * NX + NX; i++)
+        {
+	    if (kind[i] == KIND_COMMON)
+    	    {
+    		int ri = i + NX * NY;
 
-	            r[i] -= (DT / DH) * (hn_r[ri] - hn_r[i]);
-    		    ru[i] -= (DT / DH) * (hn_ru[ri] - hn_ru[i]);
-	            rv[i] -= (DT / DH) * (hn_rv[ri] - hn_rv[i]);
-	            rw[i] -= (DT / DH) * (hn_rw[ri] - hn_rw[i]);
-    		    E[i] -= (DT / DH) * (hn_E[ri] - hn_E[i]);
-    		}
+	        r[i] -= (DT / DH) * (hn_r[ri] - hn_r[i]);
+    		ru[i] -= (DT / DH) * (hn_ru[ri] - hn_ru[i]);
+	        rv[i] -= (DT / DH) * (hn_rv[ri] - hn_rv[i]);
+	        rw[i] -= (DT / DH) * (hn_rw[ri] - hn_rw[i]);
+    		E[i] -= (DT / DH) * (hn_E[ri] - hn_E[i]);
     	    }
-        }
+    	}
     }
 
-    for (int iz = 0; iz < NZ; iz++)
+    for (int iz = 1; iz < NZ - 1; iz++)
     {
 	for (int iy = 0; iy < NY; iy++)
 	{
