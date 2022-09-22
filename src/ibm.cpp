@@ -1657,17 +1657,11 @@ approximate_values()
             t_xz = m4x4_scalar_product(vec_base[i], vec_t_xz);
             t_yz = m4x4_scalar_product(vec_base[i], vec_t_yz);
 
-            if ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
-                && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i])))
-            {
-                m4x4_init_vec(vec_q_ts,
-                              q, t_xy, t_yz, 1.0);
-            }
-            else
-            {
-                m4x4_init_vec(vec_q_ts,
-                              q, t_xy, t_xz, 1.0);
-            }
+	    vec_q_ts[0] = q;
+	    vec_q_ts[1] = t_xy;
+	    vec_q_ts[2] = ((abs(p0_normal_x[i]) <= abs(p0_normal_y[i]))
+	                   && (abs(p0_normal_x[i]) <= abs(p0_normal_z[i]))) ? t_yz : t_xz;
+	    vec_q_ts[3] = 1.0;
 
             m4x4_mul_mat_vec(mat_ee[i], vec_q_ts, vec_vg);
 
