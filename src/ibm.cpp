@@ -165,6 +165,7 @@ double time_approximate_start;
 
 #if USE_AVX512 == 1
 __m512d z = _mm512_setzero_pd();
+__m512d z_kind_common = _mm512_set1_pd(KIND_COMMON);
 #endif
 
 // Инициализация сферы.
@@ -1334,17 +1335,31 @@ calc_flows_z()
 
     for (int iy = 0; iy < NY; iy++)
     {
-        for (int i = iy * NX; i < iy * NX + NX; i++)
+        for (int i = iy * NX; i < iy * NX + NX; i += 8)
         {
-	    if (kind[i] == KIND_COMMON)
-    	    {
-    		int ri = i + NX * NY;
 
-	        r[i] -= (DT / DH) * (hn_r[ri] - hn_r[i]);
-    		ru[i] -= (DT / DH) * (hn_ru[ri] - hn_ru[i]);
-	        rv[i] -= (DT / DH) * (hn_rv[ri] - hn_rv[i]);
-	        rw[i] -= (DT / DH) * (hn_rw[ri] - hn_rw[i]);
-    		E[i] -= (DT / DH) * (hn_E[ri] - hn_E[i]);
+#if USE_AVX512 == 1
+	    __m512d z_kind = _mm512_load_pd(&kind[i]);
+	    __mmask8 m = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
+
+	    if (m == 0x0)
+	    {
+		continue;
+	    }
+#endif
+
+    	    for (int l = i; l < i + 8; l++)
+    	    {
+		if (kind[l] == KIND_COMMON)
+    		{
+    		    int ri = l + NX * NY;
+
+	    	    r[l] -= (DT / DH) * (hn_r[ri] - hn_r[l]);
+    		    ru[l] -= (DT / DH) * (hn_ru[ri] - hn_ru[l]);
+	    	    rv[l] -= (DT / DH) * (hn_rv[ri] - hn_rv[l]);
+	    	    rw[l] -= (DT / DH) * (hn_rw[ri] - hn_rw[l]);
+    		    E[l] -= (DT / DH) * (hn_E[ri] - hn_E[l]);
+    		}
     	    }
     	}
     }
@@ -1374,17 +1389,31 @@ calc_flows_z()
     {
 	for (int iy = 0; iy < NY; iy++)
 	{
-	    for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i++)
+	    for (int i = iz * NX * NY + iy * NX; i < iz * NX * NY + iy * NX + NX; i += 8)
 	    {
-    		if (kind[i] == KIND_COMMON)
-    		{
-        	    int li = i - NX * NY;
 
-	            r[i] -= (DT / DH) * (hp_r[i] - hp_r[li]);
-    		    ru[i] -= (DT / DH) * (hp_ru[i] - hp_ru[li]);
-	            rv[i] -= (DT / DH) * (hp_rv[i] - hp_rv[li]);
-	            rw[i] -= (DT / DH) * (hp_rw[i] - hp_rw[li]);
-    		    E[i] -= (DT / DH) * (hp_E[i] - hp_E[li]);
+#if USE_AVX512 == 1
+		__m512d z_kind = _mm512_load_pd(&kind[i]);
+		__mmask8 m = _mm512_cmpeq_pd_mask(z_kind, z_kind_common);
+
+		if (m == 0x0)
+		{
+		    continue;
+		}
+#endif
+
+		for (int l = i; l < i + 8; l++)
+		{
+    		    if (kind[l] == KIND_COMMON)
+    		    {
+        		int li = l - NX * NY;
+
+	        	r[l] -= (DT / DH) * (hp_r[l] - hp_r[li]);
+    			ru[l] -= (DT / DH) * (hp_ru[l] - hp_ru[li]);
+	        	rv[l] -= (DT / DH) * (hp_rv[l] - hp_rv[li]);
+	        	rw[l] -= (DT / DH) * (hp_rw[l] - hp_rw[li]);
+    			E[l] -= (DT / DH) * (hp_E[l] - hp_E[li]);
+    		    }
     		}
     	    }
         }
